@@ -348,11 +348,12 @@ select.form-input option{color:var(--navy-dark)}
     <div id="guardian-reg-section">
       <hr class="divider">
       <div class="text-sm" style="font-weight:600;color:rgba(255,255,255,.8);margin-bottom:4px">Guardian Contact <span style="color:rgba(255,255,255,.4);font-weight:400">(recommended)</span></div>
-      <div class="two-col mt-8" style="margin-top:8px">
-        <div class="form-group"><label class="form-label">Guardian Name</label><input class="form-input" id="reg-g-name" placeholder="Parent / Guardian"></div>
-        <div class="form-group"><label class="form-label">Email or Phone</label><input class="form-input" id="reg-g-contact" placeholder="parent@email.com"></div>
+      <div class="form-group mt-8" style="margin-top:8px"><label class="form-label">Guardian Name</label><input class="form-input" id="reg-g-name" placeholder="Parent / Guardian"></div>
+      <div class="two-col" style="margin-top:8px">
+        <div class="form-group"><label class="form-label">Guardian Email</label><input class="form-input" id="reg-g-email" placeholder="parent@email.com" type="email"></div>
+        <div class="form-group"><label class="form-label">Guardian Phone</label><input class="form-input" id="reg-g-phone" placeholder="+1 (555) 000-0000"></div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
         <div class="checkbox checked" id="chk-cp" onclick="this.classList.toggle('checked')"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2,6 5,9 10,3"/></svg></div>
         <span class="text-sm" style="color:rgba(255,255,255,.7)">Checkpoint notifications</span>
         <button class="help-icon" onclick="showHelp('checkpoint')">?</button>

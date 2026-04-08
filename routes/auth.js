@@ -14,7 +14,7 @@ const getSecret = (req) =>
 router.post('/register', async (req, res) => {
   try {
     const { first_name, last_name, email, phone, password, role,
-            guardian_name, guardian_contact, checkpoint_notifs } = req.body;
+            guardian_name, guardian_email, guardian_phone, checkpoint_notifs } = req.body;
     if (!first_name || !last_name || !email || !password || !role)
       return res.status(400).json({ error: 'Missing required fields' });
     if (!['passenger','driver'].includes(role))
@@ -28,9 +28,9 @@ router.post('/register', async (req, res) => {
       `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,"role") VALUES ($1,$2,$3,$4,$5,$6,$7)`,
       [id, first_name, last_name, email, phone||'', hash, role]
     );
-    if (role === 'passenger' && guardian_contact) {
-      await run(`INSERT INTO guardians (id,passenger_id,name,contact,checkpoint_notifs) VALUES ($1,$2,$3,$4,$5)`,
-        [uuidv4(), id, guardian_name||'Guardian', guardian_contact, checkpoint_notifs ? 1 : 0]);
+    if (role === 'passenger' && (guardian_email || guardian_phone)) {
+      await run(`INSERT INTO guardians (id,passenger_id,name,email,phone,checkpoint_notifs) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [uuidv4(), id, guardian_name||'Guardian', guardian_email||'', guardian_phone||'', checkpoint_notifs ? 1 : 0]);
     }
     const token = jwt.sign({ id, email, role, first_name, last_name }, getSecret(req), { expiresIn: '30d' });
     res.json({ token, user: { id, first_name, last_name, email, role } });

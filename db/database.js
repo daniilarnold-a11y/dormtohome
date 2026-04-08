@@ -40,7 +40,8 @@ async function createSchema() {
       id TEXT PRIMARY KEY,
       passenger_id TEXT NOT NULL REFERENCES users(id),
       name TEXT NOT NULL,
-      contact TEXT NOT NULL,
+      email TEXT,
+      phone TEXT,
       checkpoint_notifs INTEGER DEFAULT 1
     );
 
@@ -152,8 +153,8 @@ async function seedDatabase() {
     );
   }
 
-  await run(`INSERT INTO guardians VALUES ($1,$2,$3,$4,$5)`,
-    [uuidv4(), 'u-passenger-1', 'Linda Johnson', 'linda@gmail.com', 1]);
+  await run(`INSERT INTO guardians (id,passenger_id,name,email,phone,checkpoint_notifs) VALUES ($1,$2,$3,$4,$5,$6)`,
+    [uuidv4(), 'u-passenger-1', 'Linda Johnson', 'linda@gmail.com', '5551234567', 1]);
 
   const routes = [
     { id:'r-001',num:'DTH-201',driver:'u-driver-1',from:'College Station',fz:'77840',to:'Houston',    tz:'77001',date:'2025-05-10',dep:'08:00 AM',arr:'11:30 AM',dur:'3h 30m',price:28 },

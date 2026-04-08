@@ -130,7 +130,8 @@ async function doRegister() {
     const body = {
       first_name: first, last_name: last, email, phone, password: pass, role: regType,
       guardian_name: document.getElementById('reg-g-name')?.value,
-      guardian_contact: document.getElementById('reg-g-contact')?.value,
+      guardian_email: document.getElementById('reg-g-email')?.value,
+      guardian_phone: document.getElementById('reg-g-phone')?.value,
       checkpoint_notifs: document.getElementById('chk-cp')?.classList.contains('checked'),
     };
     const data = await api('POST', '/auth/register', body, false);
@@ -830,11 +831,12 @@ function buildAccountPage(user, guardians) {
           ${guardians.map(g => buildGuardianCard(g)).join('') || '<div class="text-sm text-muted">No guardians added yet.</div>'}
         </div>
         <div id="guardian-add-form" style="display:none;margin-top:14px;background:var(--gray-100);border-radius:10px;padding:14px">
-          <div class="two-col">
-            <div class="form-group"><label class="form-label" style="color:var(--navy)">Name</label><input class="form-input" style="color:var(--navy-dark);background:white" id="g-add-name" placeholder="Guardian name"></div>
-            <div class="form-group"><label class="form-label" style="color:var(--navy)">Email / Phone</label><input class="form-input" style="color:var(--navy-dark);background:white" id="g-add-contact" placeholder="Contact info"></div>
+          <div class="form-group"><label class="form-label" style="color:var(--navy)">Name</label><input class="form-input" style="color:var(--navy-dark);background:white" id="g-add-name" placeholder="Guardian name"></div>
+          <div class="two-col" style="margin-top:8px">
+            <div class="form-group"><label class="form-label" style="color:var(--navy)">Email</label><input class="form-input" style="color:var(--navy-dark);background:white" id="g-add-email" placeholder="guardian@email.com" type="email"></div>
+            <div class="form-group"><label class="form-label" style="color:var(--navy)">Phone</label><input class="form-input" style="color:var(--navy-dark);background:white" id="g-add-phone" placeholder="+1 (555) 000-0000"></div>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;margin-top:8px">
             <div class="checkbox checked" id="g-add-cp" onclick="this.classList.toggle('checked')"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2,6 5,9 10,3"/></svg></div>
             <span class="text-sm" style="color:var(--navy-dark)">Checkpoint notifications</span>
             <button class="help-icon" onclick="showHelp('checkpoint')">?</button>
@@ -850,11 +852,12 @@ function buildAccountPage(user, guardians) {
 }
 
 function buildGuardianCard(g) {
+  const contactInfo = [g.email, g.phone].filter(Boolean).join(' · ');
   return `<div class="guardian-card" id="gc-${g.id}">
     <div style="width:36px;height:36px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-light)" stroke-width="1.8" width="16" height="16"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0112 0v1"/></svg></div>
     <div style="flex:1">
       <div style="font-weight:500;font-size:.9rem;color:var(--navy)">${g.name}</div>
-      <div class="text-xs text-muted">${g.contact}</div>
+      <div class="text-xs text-muted">${contactInfo}</div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
         <div class="checkbox ${g.checkpoint_notifs ? 'checked' : ''}" onclick="toggleGuardianNotif('${g.id}',this)"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="2,6 5,9 10,3"/></svg></div>
         <span class="text-xs text-muted">Checkpoints</span>
@@ -882,7 +885,8 @@ async function saveGuardian() {
   try {
     const g = await api('POST', '/guardians', {
       name: document.getElementById('g-add-name').value,
-      contact: document.getElementById('g-add-contact').value,
+      email: document.getElementById('g-add-email').value,
+      phone: document.getElementById('g-add-phone').value,
       checkpoint_notifs: document.getElementById('g-add-cp').classList.contains('checked'),
     });
     document.getElementById('guardian-list').innerHTML += buildGuardianCard(g);
