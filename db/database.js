@@ -32,7 +32,7 @@ async function createSchema() {
       email TEXT UNIQUE NOT NULL,
       phone TEXT,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('passenger','driver')),
+      "role" TEXT NOT NULL CHECK("role" IN ('passenger','driver')),
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
@@ -68,7 +68,7 @@ async function createSchema() {
       id TEXT PRIMARY KEY,
       route_id TEXT NOT NULL REFERENCES routes(id),
       city TEXT NOT NULL,
-      stop_type TEXT NOT NULL CHECK(stop_type IN ('stop','checkpoint')),
+      "type" TEXT NOT NULL CHECK("type" IN ('stop','checkpoint')),
       order_index INTEGER NOT NULL,
       scheduled_time TEXT,
       status TEXT DEFAULT 'upcoming' CHECK(status IN ('upcoming','active','done'))
@@ -117,7 +117,7 @@ async function createSchema() {
       user_id TEXT NOT NULL REFERENCES users(id),
       title TEXT NOT NULL,
       body TEXT NOT NULL,
-      type TEXT DEFAULT 'info',
+      "type" TEXT DEFAULT 'info',
       is_read INTEGER DEFAULT 0,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
@@ -147,7 +147,7 @@ async function seedDatabase() {
   ];
   for (const u of users) {
     await run(
-      `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,role) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,"role") VALUES ($1,$2,$3,$4,$5,$6,$7)`,
       [u.id, u.first, u.last, u.email, '5550000000', pw, u.role]
     );
   }
@@ -203,9 +203,9 @@ async function seedDatabase() {
       [uuidv4(),'r-001',m.sender,m.content,'text']);
   }
 
-  await run(`INSERT INTO notifications (id,user_id,title,body,type) VALUES ($1,$2,$3,$4,$5)`,
+  await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
     [uuidv4(),'u-passenger-1','Bus DTH-201 approaching','Your bus is 15 minutes from Houston stop.','alert']);
-  await run(`INSERT INTO notifications (id,user_id,title,body,type) VALUES ($1,$2,$3,$4,$5)`,
+  await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
     [uuidv4(),'u-passenger-1','Check-in Confirmed','You have been successfully checked in for DTH-201.','success']);
 
   await run(`INSERT INTO driver_location VALUES ($1,$2,$3,NOW())`,

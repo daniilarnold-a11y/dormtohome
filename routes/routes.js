@@ -80,7 +80,7 @@ router.post('/', authMiddleware, requireRole('driver'), async (req, res) => {
     if (Array.isArray(stops)) {
       for (let i = 0; i < stops.length; i++) {
         const s = stops[i];
-        await run(`INSERT INTO route_stops (id,route_id,city,stop_type,order_index,scheduled_time,status) VALUES ($1,$2,$3,$4,$5,$6,'upcoming')`,
+        await run(`INSERT INTO route_stops (id,route_id,city,"type",order_index,scheduled_time,status) VALUES ($1,$2,$3,$4,$5,$6,'upcoming')`,
           [uuidv4(), id, s.city, s.type||'stop', i+1, s.time||null]);
       }
     }

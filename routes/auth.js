@@ -25,7 +25,7 @@ router.post('/register', async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     const id = uuidv4();
     await run(
-      `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,role) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,"role") VALUES ($1,$2,$3,$4,$5,$6,$7)`,
       [id, first_name, last_name, email, phone||'', hash, role]
     );
     if (role === 'passenger' && guardian_contact) {

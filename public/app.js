@@ -103,7 +103,7 @@ async function doLogin() {
     S.user = data.user;
     localStorage.setItem('dth_token', S.token);
     connectSocket();
-    if (S.user.role === 'passenger') {
+    if (S.user?.role === 'passenger') {
       setAvatarInitials('p-avatar', S.user);
       showScreen('screen-passenger');
       pTab('routes');
@@ -112,7 +112,7 @@ async function doLogin() {
       showScreen('screen-driver');
       dTab('dashboard');
     }
-    toast(`Welcome back, ${S.user.first_name}!`, 'success');
+    toast(`Welcome back, ${S.user?.first_name || ''}!`, 'success');
   } catch (e) { toast(e.message, 'error'); }
   btn.innerHTML = 'Sign In'; btn.disabled = false;
 }
@@ -137,14 +137,14 @@ async function doRegister() {
     S.token = data.token; S.user = data.user;
     localStorage.setItem('dth_token', S.token);
     connectSocket();
-    if (S.user.role === 'passenger') {
+    if (S.user?.role === 'passenger') {
       setAvatarInitials('p-avatar', S.user);
       showScreen('screen-passenger'); pTab('routes');
     } else {
       setAvatarInitials('d-avatar', S.user);
       showScreen('screen-driver'); dTab('dashboard');
     }
-    toast(`Welcome, ${S.user.first_name}!`, 'success');
+    toast(`Welcome, ${S.user?.first_name || ''}!`, 'success');
   } catch (e) { toast(e.message, 'error'); }
   btn.innerHTML = 'Create Account'; btn.disabled = false;
 }
@@ -802,7 +802,7 @@ function buildAccountPage(user, guardians) {
       <div class="card mb-16" style="margin-bottom:16px">
         <div class="section-title">Profile</div>
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
-          <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;color:var(--navy-dark)">${user.first_name[0]}${user.last_name[0]}</div>
+          <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;color:var(--navy-dark)">${(user.first_name || '')[0] || ''}${(user.last_name || '')[0] || ''}</div>
           <div><div style="font-weight:600;color:var(--navy)">${user.first_name} ${user.last_name}</div><div class="text-sm text-muted">${user.email}</div><div class="text-sm text-muted">${user.phone || 'No phone'}</div></div>
         </div>
         <div class="form-group"><label class="form-label" style="color:var(--navy)">First Name</label><input class="form-input" style="color:var(--navy-dark);background:var(--gray-100);border-color:var(--gray-200)" id="acc-first" value="${user.first_name}"></div>

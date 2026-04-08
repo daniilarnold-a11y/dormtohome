@@ -50,8 +50,8 @@ io.on('connection', (socket) => {
     if (!routeId || !content) return;
     try {
       const id = uuidv4();
-      run(`INSERT INTO messages (id,route_id,sender_id,content,message_type) VALUES (?,?,?,?,'text')`, [id, routeId, user.id, content]);
-      const msg = get(`SELECT m.*, u.first_name||' '||u.last_name as sender_name, u.role as sender_role FROM messages m JOIN users u ON m.sender_id=u.id WHERE m.id=?`, [id]);
+      run(`INSERT INTO messages (id,route_id,sender_id,content,message_type) VALUES ($1,$2,$3,$4,'text')`, [id, routeId, user.id, content]);
+      const msg = get(`SELECT m.*, u.first_name||' '||u.last_name as sender_name, u."role" as sender_role FROM messages m JOIN users u ON m.sender_id=u.id WHERE m.id=$1`, [id]);
       io.to(`route:${routeId}`).emit('new_message', msg);
     } catch (e) { console.error('[socket] send_message:', e.message); }
   });
@@ -59,7 +59,8 @@ io.on('connection', (socket) => {
   socket.on('driver_location_update', ({ latitude, longitude, routeId }) => {
     if (user.role !== 'driver') return;
     try {
-      run(`INSERT OR REPLACE INTO driver_location (driver_id,latitude,longitude,updated_at) VALUES (?,?,?,CURRENT_TIMESTAMP)`, [user.id, latitude, longitude]);
+      run(`INSERT INTO driver_location (driver_id,latitude,longitude,updated_at) VALUES ($1,$2,$3,CURRENT_TIMESTAMP)
+          ON CONFLICT (driver_id) DO UPDATE SET latitude=$2, longitude=$3, updated_at=CURRENT_TIMESTAMP`, [user.id, latitude, longitude]);
       if (routeId) io.to(`route:${routeId}`).emit('bus_location', { driverId: user.id, latitude, longitude });
     } catch (e) { console.error('[socket] location:', e.message); }
   });
@@ -67,9 +68,9 @@ io.on('connection', (socket) => {
   socket.on('checkin_passenger', ({ bookingId, routeId }) => {
     if (user.role !== 'driver') return;
     try {
-      run('UPDATE bookings SET checkin_status=? WHERE id=?', ['checked', bookingId]);
+      run('UPDATE bookings SET checkin_status=$1 WHERE id=$2', ['checked', bookingId]);
       const booking = get(`SELECT b.*, u.first_name, u.last_name, u.id as uid FROM bookings b JOIN users u ON b.passenger_id=u.id WHERE b.id=?`, [bookingId]);
-      run(`INSERT INTO notifications (id,user_id,title,body,type) VALUES (?,?,?,?,?)`, [uuidv4(), booking.uid, 'Checked In', 'You have been checked in. Have a great ride!', 'success']);
+      run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`, [uuidv4(), booking.uid, 'Checked In', 'You have been checked in. Have a great ride!', 'success']);
       io.to(`route:${routeId}`).emit('passenger_checked_in', { bookingId, passengerName: `${booking.first_name} ${booking.last_name}`, seat: booking.seat_number });
       for (const [sid, info] of connectedUsers.entries()) {
         if (info.userId === booking.uid) io.to(sid).emit('new_notification', { title: 'Checked In', body: 'You have been checked in!' });
@@ -82,14 +83,14 @@ io.on('connection', (socket) => {
     try {
       const passengers = all(`SELECT DISTINCT b.passenger_id FROM bookings b WHERE b.route_id=?`, [routeId]);
       for (const p of passengers) {
-        run(`INSERT INTO notifications (id,user_id,title,body,type) VALUES (?,?,?,?,?)`, [uuidv4(), p.passenger_id, 'Driver Update', message, 'alert']);
+        run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`, [uuidv4(), p.passenger_id, 'Driver Update', message, 'alert']);
         for (const [sid, info] of connectedUsers.entries()) {
           if (info.userId === p.passenger_id) io.to(sid).emit('new_notification', { title: 'Driver Update', body: message });
         }
       }
       const id = uuidv4();
-      run(`INSERT INTO messages (id,route_id,sender_id,content,message_type) VALUES (?,?,?,?,'notification')`, [id, routeId, user.id, `📢 ${message}`]);
-      const msg = get(`SELECT m.*, u.first_name||' '||u.last_name as sender_name, u.role as sender_role FROM messages m JOIN users u ON m.sender_id=u.id WHERE m.id=?`, [id]);
+      run(`INSERT INTO messages (id,route_id,sender_id,content,message_type) VALUES ($1,$2,$3,$4,'notification')`, [id, routeId, user.id, `📢 ${message}`]);
+      const msg = get(`SELECT m.*, u.first_name||' '||u.last_name as sender_name, u."role" as sender_role FROM messages m JOIN users u ON m.sender_id=u.id WHERE m.id=$1`, [id]);
       io.to(`route:${routeId}`).emit('new_message', msg);
     } catch (e) { console.error('[socket] broadcast:', e.message); }
   });
@@ -97,16 +98,16 @@ io.on('connection', (socket) => {
   socket.on('stop_completed', ({ routeId, stopId }) => {
     if (user.role !== 'driver') return;
     try {
-      run('UPDATE route_stops SET status=? WHERE id=?', ['done', stopId]);
-      const stops = all('SELECT * FROM route_stops WHERE route_id=? ORDER BY order_index', [routeId]);
+      run('UPDATE route_stops SET status=$1 WHERE id=$2', ['done', stopId]);
+      const stops = all('SELECT * FROM route_stops WHERE route_id=$1 ORDER BY order_index', [routeId]);
       const doneIdx = stops.findIndex(s => s.id === stopId);
-      if (doneIdx >= 0 && stops[doneIdx + 1]) run('UPDATE route_stops SET status=? WHERE id=?', ['active', stops[doneIdx + 1].id]);
-      io.to(`route:${routeId}`).emit('route_progress', { stops: all('SELECT * FROM route_stops WHERE route_id=? ORDER BY order_index', [routeId]) });
+      if (doneIdx >= 0 && stops[doneIdx + 1]) run('UPDATE route_stops SET status=$1 WHERE id=$2', ['active', stops[doneIdx + 1].id]);
+      io.to(`route:${routeId}`).emit('route_progress', { stops: all('SELECT * FROM route_stops WHERE route_id=$1 ORDER BY order_index', [routeId]) });
       const stop = stops.find(s => s.id === stopId);
-      if (stop?.stop_type === 'checkpoint') {
-        const passengers = all(`SELECT DISTINCT b.passenger_id FROM bookings b WHERE b.route_id=?`, [routeId]);
+      if (stop?.type === 'checkpoint') {
+        const passengers = all(`SELECT DISTINCT b.passenger_id FROM bookings b WHERE b.route_id=$1`, [routeId]);
         for (const p of passengers) {
-          run(`INSERT INTO notifications (id,user_id,title,body,type) VALUES (?,?,?,?,?)`, [uuidv4(), p.passenger_id, `Checkpoint: ${stop.city}`, `Your bus has passed through ${stop.city}.`, 'info']);
+          run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`, [uuidv4(), p.passenger_id, `Checkpoint: ${stop.city}`, `Your bus has passed through ${stop.city}.`, 'info']);
           for (const [sid, info] of connectedUsers.entries()) {
             if (info.userId === p.passenger_id) io.to(sid).emit('new_notification', { title: 'Checkpoint', body: `Bus passed through ${stop.city}` });
           }

@@ -45,7 +45,7 @@ router.post('/bookings', authMiddleware, requireRole('passenger'), async (req, r
       `INSERT INTO bookings (id,route_id,passenger_id,seat_number,checkin_status,booking_type,amount_paid) VALUES ($1,$2,$3,$4,'pending',$5,$6)`,
       [id, route_id, req.user.id, seat_number, booking_type||'seat', amount]
     );
-    await run(`INSERT INTO notifications (id,user_id,title,body,type) VALUES ($1,$2,$3,$4,$5)`,
+    await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
       [uuidv4(), req.user.id, 'Booking Confirmed!', `Seat ${seat_number} booked successfully.`, 'success']);
     res.json({ id, seat_number, amount_paid: amount, checkin_status: 'pending' });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -56,7 +56,7 @@ router.patch('/bookings/:id/checkin', authMiddleware, requireRole('driver'), asy
     await run('UPDATE bookings SET checkin_status=$1 WHERE id=$2', ['checked', req.params.id]);
     const booking = await get(`SELECT b.*, u.first_name, u.last_name, u.id as uid
       FROM bookings b JOIN users u ON b.passenger_id=u.id WHERE b.id=$1`, [req.params.id]);
-    await run(`INSERT INTO notifications (id,user_id,title,body,type) VALUES ($1,$2,$3,$4,$5)`,
+    await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
       [uuidv4(), booking.uid, 'Checked In', `${booking.first_name} ${booking.last_name} has boarded.`, 'success']);
     res.json({ success: true, booking });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -104,7 +104,7 @@ router.post('/requests/:id/support', authMiddleware, async (req, res) => {
 router.get('/messages/:routeId', authMiddleware, async (req, res) => {
   try {
     const msgs = await all(`
-      SELECT m.*, u.first_name || ' ' || u.last_name as sender_name, u.role as sender_role
+      SELECT m.*, u.first_name || ' ' || u.last_name as sender_name, u."role" as sender_role
       FROM messages m JOIN users u ON m.sender_id=u.id
       WHERE m.route_id=$1 ORDER BY m.sent_at ASC`, [req.params.routeId]);
     res.json(msgs);
@@ -118,7 +118,7 @@ router.post('/messages/:routeId', authMiddleware, async (req, res) => {
     const id = uuidv4();
     await run(`INSERT INTO messages (id,route_id,sender_id,content,message_type) VALUES ($1,$2,$3,$4,'text')`,
       [id, req.params.routeId, req.user.id, content]);
-    const msg = await get(`SELECT m.*, u.first_name || ' ' || u.last_name as sender_name, u.role as sender_role
+    const msg = await get(`SELECT m.*, u.first_name || ' ' || u.last_name as sender_name, u."role" as sender_role
       FROM messages m JOIN users u ON m.sender_id=u.id WHERE m.id=$1`, [id]);
     res.json(msg);
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -219,7 +219,7 @@ router.post('/driver-notification', authMiddleware, requireRole('driver'), async
     const { route_id, message } = req.body;
     const passengers = await all(`SELECT DISTINCT b.passenger_id FROM bookings b WHERE b.route_id=$1`, [route_id]);
     for (const p of passengers) {
-      await run(`INSERT INTO notifications (id,user_id,title,body,type) VALUES ($1,$2,$3,$4,$5)`,
+      await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
         [uuidv4(), p.passenger_id, 'Driver Update', message, 'alert']);
     }
     await run(`INSERT INTO messages (id,route_id,sender_id,content,message_type) VALUES ($1,$2,$3,$4,'notification')`,
