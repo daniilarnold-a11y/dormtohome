@@ -33,6 +33,8 @@ async function createSchema() {
       phone TEXT,
       password_hash TEXT NOT NULL,
       "role" TEXT NOT NULL CHECK("role" IN ('passenger','driver')),
+      email_verified BOOLEAN DEFAULT FALSE,
+      verification_token TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
@@ -148,7 +150,7 @@ async function seedDatabase() {
   ];
   for (const u of users) {
     await run(
-      `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,"role") VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,"role",email_verified) VALUES ($1,$2,$3,$4,$5,$6,$7,TRUE)`,
       [u.id, u.first, u.last, u.email, '5550000000', pw, u.role]
     );
   }

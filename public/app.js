@@ -135,17 +135,8 @@ async function doRegister() {
       checkpoint_notifs: document.getElementById('chk-cp')?.classList.contains('checked'),
     };
     const data = await api('POST', '/auth/register', body, false);
-    S.token = data.token; S.user = data.user;
-    localStorage.setItem('dth_token', S.token);
-    connectSocket();
-    if (S.user?.role === 'passenger') {
-      setAvatarInitials('p-avatar', S.user);
-      showScreen('screen-passenger'); pTab('routes');
-    } else {
-      setAvatarInitials('d-avatar', S.user);
-      showScreen('screen-driver'); dTab('dashboard');
-    }
-    toast(`Welcome, ${S.user?.first_name || ''}!`, 'success');
+    toast(data.message || 'Registration successful! Please check your email to verify your account.', 'success');
+    showScreen('screen-login');
   } catch (e) { toast(e.message, 'error'); }
   btn.innerHTML = 'Create Account'; btn.disabled = false;
 }
@@ -1611,6 +1602,12 @@ document.addEventListener('click', e => {
 
 // ─── AUTO LOGIN ───────────────────────────────────────────
 (async function autoLogin() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('verified') === 'true') {
+    toast('Email verified! You can now sign in.', 'success');
+    history.replaceState({}, '', '/');
+  }
+  
   const saved = localStorage.getItem('dth_token');
   if (!saved) return;
   try {

@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { all, get, run } = require('../db/database');
 const { authMiddleware } = require('../middleware/auth');
+const { sendVerificationEmail } = require('../utils/email');
 
 const getSecret = (req) =>
   (req.app && req.app.locals.JWT_SECRET) ||
@@ -24,16 +25,30 @@ router.post('/register', async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
     const id = uuidv4();
+    const verificationToken = uuidv4();
     await run(
-      `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,"role") VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [id, first_name, last_name, email, phone||'', hash, role]
+      `INSERT INTO users (id,first_name,last_name,email,phone,password_hash,"role",verification_token) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [id, first_name, last_name, email, phone||'', hash, role, verificationToken]
     );
     if (role === 'passenger' && (guardian_email || guardian_phone)) {
       await run(`INSERT INTO guardians (id,passenger_id,name,email,phone,checkpoint_notifs) VALUES ($1,$2,$3,$4,$5,$6)`,
         [uuidv4(), id, guardian_name||'Guardian', guardian_email||'', guardian_phone||'', checkpoint_notifs ? 1 : 0]);
     }
-    const token = jwt.sign({ id, email, role, first_name, last_name }, getSecret(req), { expiresIn: '30d' });
-    res.json({ token, user: { id, first_name, last_name, email, role } });
+    
+    sendVerificationEmail(email, verificationToken).catch(console.error);
+    
+    res.json({ message: 'Registration successful. Please check your email to verify your account.' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.get('/verify/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const user = await get('SELECT * FROM users WHERE verification_token=$1', [token]);
+    if (!user) return res.status(400).json({ error: 'Invalid token' });
+    
+    await run('UPDATE users SET email_verified=TRUE, verification_token=NULL WHERE id=$1', [user.id]);
+    res.redirect('/?verified=true');
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -43,6 +58,7 @@ router.post('/login', async (req, res) => {
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
     const user = await get('SELECT * FROM users WHERE email=$1', [email]);
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user.email_verified) return res.status(403).json({ error: 'Please verify your email first. Check your inbox.' });
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
     const token = jwt.sign(
