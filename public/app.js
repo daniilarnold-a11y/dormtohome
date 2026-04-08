@@ -204,7 +204,20 @@ function dTab(tab) {
 // ─── PASSENGER: ROUTES ────────────────────────────────────
 async function renderPassengerRoutes() {
   try {
-    const routes = await api('GET', '/routes', null, false);
+    const from = sessionStorage.getItem('landFrom');
+    const to = sessionStorage.getItem('landTo');
+    const date = sessionStorage.getItem('landDate');
+    sessionStorage.removeItem('landFrom');
+    sessionStorage.removeItem('landTo');
+    sessionStorage.removeItem('landDate');
+    
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (date) params.set('date', date);
+    
+    const query = params.toString();
+    const routes = await api('GET', `/routes${query ? '?' + query : ''}`, null, false);
     S.allRoutes = routes;
     const reqs = await api('GET', '/requests', null, false);
     S.requests = reqs;
@@ -1537,7 +1550,10 @@ function landingSearch() {
   const from = document.getElementById('land-from').value;
   const to = document.getElementById('land-to').value;
   const date = document.getElementById('land-date').value;
-  if (!S.token) { showScreen('screen-login'); toast('Sign in to search routes', 'info'); return; }
+  sessionStorage.setItem('landFrom', from);
+  sessionStorage.setItem('landTo', to);
+  sessionStorage.setItem('landDate', date);
+  if (!S.token) { showScreen('screen-login'); toast('Sign in to book rides', 'info'); return; }
   pTab('routes');
 }
 
