@@ -921,6 +921,7 @@ function buildDriverDashboard(a) {
   <div class="page-header">
     <div><div class="page-title">Driver Dashboard</div><div class="page-sub">${S.user?.first_name} ${S.user?.last_name}</div></div>
     <div style="display:flex;gap:8px">
+      <button class="btn btn-outline-gold btn-sm" onclick="logout()">Sign Out</button>
       <button class="btn btn-outline-gold btn-sm" onclick="openSendNotif()">📣 Send Update</button>
       <button class="btn btn-gold" onclick="dTab('create')">+ New Route</button>
     </div>
