@@ -133,7 +133,7 @@ async function createSchema() {
 
 // ─── SEED ────────────────────────────────────────────────
 async function seedDatabase() {
-  const existing = await get('SELECT id FROM users WHERE email = $1', ['alex@tamu.edu']);
+  const existing = await get('SELECT id FROM routes WHERE id = $1', ['r-001']);
   if (existing) { console.log('[DB] Already seeded, skipping'); return; }
 
   console.log('[DB] Seeding demo data...');
