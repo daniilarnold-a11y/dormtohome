@@ -1,12 +1,7 @@
 const jwt = require('jsonwebtoken');
-const { supabase } = require('../db/supabase');
 
 function getSecret(req) {
   return (req.app && req.app.locals.JWT_SECRET) || process.env.JWT_SECRET || 'dormtohome-secret-change-in-production';
-}
-
-function getSupabaseJwtSecret() {
-  return process.env.SUPABASE_JWT_SECRET || process.env.SUPABASE_SERVICE_KEY;
 }
 
 function authMiddleware(req, res, next) {
@@ -16,12 +11,7 @@ function authMiddleware(req, res, next) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : header;
   
   try {
-    const supabaseSecret = getSupabaseJwtSecret();
-    if (supabaseSecret) {
-      req.user = jwt.verify(token, supabaseSecret);
-    } else {
-      req.user = jwt.verify(token, getSecret(req));
-    }
+    req.user = jwt.verify(token, getSecret(req));
     next();
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' });
