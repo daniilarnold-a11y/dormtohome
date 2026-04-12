@@ -24,6 +24,25 @@ const S = {
   locationInterval: null,
 };
 
+// ─── GLOBAL CLICK DISPATCHER ───────────────────────────────
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+  if (el.dataset.close) closeModal(el.dataset.close);
+  if (action === 'switch-chat') {
+    switchChatRoom(el.dataset.rid, el.dataset.num, el.dataset.from, el.dataset.to, el);
+  } else if (action === 'accept-req') {
+    acceptRequest(el.dataset.from, el.dataset.to, el.dataset.date, el.dataset.time);
+  } else if (action === 'open-route-detail') {
+    openRouteDetail(el.dataset.rid);
+  } else if (action === 'start-booking') {
+    startBooking(el.dataset.rid);
+  } else if (action === 'support-req') {
+    supportRequest(el.dataset.rid);
+  }
+});
+
 // ─── CITIES ───────────────────────────────────────────────
 const CITIES = [
   {n:'College Station',s:'TX',z:'77840'},{n:'College Station',s:'TX',z:'77841'},
@@ -290,19 +309,19 @@ function buildRoutesPage(routes, reqs) {
 
 function buildRouteCard(r) {
   const pct = Math.round(((r.total_seats - r.available_seats) / r.total_seats) * 100);
-  return `<div class="route-card" onclick="openRouteDetail('${r.id}')">
+  return `<div class="route-card" data-rid="${r.id}" data-action="open-route-detail">
     <div style="flex:1">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-        <span class="city-name">${r.from_city}</span>
+        <span class="city-name">${String(r.from_city)}</span>
         <span class="route-arrow" style="font-size:1.1rem">→</span>
-        <span class="city-name">${r.to_city}</span>
-        <span class="route-num">${r.route_number}</span>
+        <span class="city-name">${String(r.to_city)}</span>
+        <span class="route-num">${String(r.route_number)}</span>
       </div>
       <div class="route-meta">
-        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${r.departure_date}</span>
-        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${r.departure_time} – ${r.arrival_time}</span>
-        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>${r.duration}</span>
-        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 20v-2a7 7 0 0114 0v2"/></svg>${r.available_seats} seats left</span>
+        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${String(r.departure_date)}</span>
+        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${String(r.departure_time)} – ${String(r.arrival_time)}</span>
+        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>${String(r.duration)}</span>
+        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 20v-2a7 7 0 0114 0v2"/></svg>${String(r.available_seats)} seats left</span>
         <span class="route-meta-item">🧑‍✈️ ${r.driver_name}</span>
       </div>
       <div style="margin-top:10px">
@@ -311,10 +330,10 @@ function buildRouteCard(r) {
       </div>
     </div>
     <div style="text-align:right;flex-shrink:0">
-      <div class="route-price">$${r.price_per_seat}</div>
+      <div class="route-price">$${String(r.price_per_seat)}</div>
       <div class="route-seats">per seat</div>
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
-        <button class="btn btn-gold btn-sm" onclick="event.stopPropagation();startBooking('${r.id}')">Book Seat</button>
+        <button class="btn btn-gold btn-sm" data-rid="${r.id}" data-action="start-booking">Book Seat</button>
       </div>
     </div>
   </div>`;
@@ -323,7 +342,7 @@ function buildRouteCard(r) {
 function buildReqCard(r) {
   return `<div class="req-card" id="req-${r.id}">
     <div>
-      <div style="font-weight:600;color:var(--navy);margin-bottom:3px">${r.from_city} → ${r.to_city}</div>
+      <div style="font-weight:600;color:var(--navy);margin-bottom:3px">${String(r.from_city)} → ${String(r.to_city)}</div>
       <div class="text-sm text-muted">${r.requested_date ? new Date(r.requested_date + 'T00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : 'Flexible'}</div>
       <div class="text-xs text-muted" style="margin-top:2px">🕐 Departs: ${r.requested_time || 'Any'}</div>
     </div>
@@ -333,7 +352,7 @@ function buildReqCard(r) {
     </div>
     ${S.user && r.requester_id === S.user.id
       ? `<button class="btn btn-sm" style="background:var(--gray-200);color:var(--gray-500);cursor:default" disabled>Your Request</button>`
-      : `<button class="btn btn-outline-gold btn-sm" id="rbtn-${r.id}" onclick="supportRequest('${r.id}')">Support Route</button>`}
+      : `<button class="btn btn-outline-gold btn-sm" id="rbtn-${r.id}" data-rid="${r.id}" data-action="support-req">Support Route</button>`}
   </div>`;
 }
 
@@ -546,38 +565,38 @@ async function openRouteDetail(id) {
   try {
     const r = await api('GET', `/routes/${id}`, null, false);
     S.currentRoute = r;
-    document.getElementById('modal-route-title').textContent = `${r.route_number}: ${r.from_city} → ${r.to_city}`;
+    document.getElementById('modal-route-title').textContent = `${String(r.route_number)}: ${String(r.from_city)} → ${String(r.to_city)}`;
     const stops = r.stops || [];
     document.getElementById('modal-route-body').innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
         <div style="background:var(--gray-100);border-radius:10px;padding:14px">
           <div class="text-xs text-muted mb-4">DEPARTURE</div>
-          <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy)">${r.from_city}</div>
-          <div class="text-sm text-muted">${r.departure_date} · ${r.departure_time}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy)">${String(r.from_city)}</div>
+          <div class="text-sm text-muted">${String(r.departure_date)} · ${String(r.departure_time)}</div>
         </div>
         <div style="background:var(--gray-100);border-radius:10px;padding:14px">
           <div class="text-xs text-muted mb-4">ARRIVAL</div>
-          <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy)">${r.to_city}</div>
-          <div class="text-sm text-muted">${r.departure_date} · ${r.arrival_time}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy)">${String(r.to_city)}</div>
+          <div class="text-sm text-muted">${String(r.departure_date)} · ${String(r.arrival_time)}</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
-        <span class="badge badge-gold">⏱ ${r.duration}</span>
+        <span class="badge badge-gold">⏱ ${String(r.duration)}</span>
         <span class="badge badge-blue">🧑‍✈️ ${r.driver_name}</span>
-        <span class="badge badge-green">💺 ${r.available_seats}/${r.total_seats}</span>
-        <span class="badge badge-gold">$${r.price_per_seat}/seat</span>
-        <span class="route-num">${r.route_number}</span>
+        <span class="badge badge-green">💺 ${String(r.available_seats)}/${String(r.total_seats)}</span>
+        <span class="badge badge-gold">$${String(r.price_per_seat)}/seat</span>
+        <span class="route-num">${String(r.route_number)}</span>
       </div>
       ${stops.length ? `
       <div class="section-title">Route Stops</div>
       <div class="stops-list">
-        <div class="stop-item"><div class="stop-dot done">✓</div><div style="flex:1"><div style="font-weight:500;font-size:.9rem;color:var(--navy)">${r.from_city}</div><div class="text-xs text-muted">${r.departure_time}</div></div></div>
+        <div class="stop-item"><div class="stop-dot done">✓</div><div style="flex:1"><div style="font-weight:500;font-size:.9rem;color:var(--navy)">${String(r.from_city)}</div><div class="text-xs text-muted">${String(r.departure_time)}</div></div></div>
         ${stops.map(s=>`<div class="stop-item"><div class="stop-dot ${s.stop_type==='checkpoint'?'':''}" style="${s.stop_type==='checkpoint'?'border-color:var(--gold-light);font-size:.55rem;font-weight:700;color:var(--gold)':''}"><span>${s.stop_type==='checkpoint'?'CP':''}</span></div>
         <div style="flex:1"><div style="font-weight:500;font-size:.9rem;color:var(--navy)">${s.city}</div><div class="text-xs text-muted">${s.stop_type==='checkpoint'?'Guardian checkpoint':'Bus stop'}${s.scheduled_time?' · '+s.scheduled_time:''}</div></div></div>`).join('')}
-        <div class="stop-item"><div class="stop-dot" style="border-color:var(--gold)"></div><div style="flex:1"><div style="font-weight:500;font-size:.9rem;color:var(--navy)">${r.to_city}</div><div class="text-xs text-muted">${r.arrival_time}</div></div></div>
+        <div class="stop-item"><div class="stop-dot" style="border-color:var(--gold)"></div><div style="flex:1"><div style="font-weight:500;font-size:.9rem;color:var(--navy)">${String(r.to_city)}</div><div class="text-xs text-muted">${String(r.arrival_time)}</div></div></div>
       </div>` : ''}
       ${r.notes ? `<div style="background:var(--gray-100);border-radius:8px;padding:12px;font-size:.85rem;color:var(--gray-600);margin-top:16px">📝 ${r.notes}</div>` : ''}
-      <button class="btn btn-gold btn-full btn-lg" style="margin-top:20px" onclick="closeModal('modal-route');startBooking('${r.id}')">Book a Seat — $${r.price_per_seat}</button>`;
+      <button class="btn btn-gold btn-full btn-lg" style="margin-top:20px" data-action="start-booking" data-close="modal-route" data-rid="${r.id}">Book a Seat — $${String(r.price_per_seat)}</button>`;
     openModal('modal-route');
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -879,10 +898,13 @@ function buildChatUI(rooms, msgs, active) {
   <div class="chat-layout">
     <div class="chat-sidebar">
       <div class="chat-sidebar-header">Your Trips</div>
-      ${rooms.map((r, i) => `<div class="chat-room-item ${i === 0 ? 'active' : ''}" onclick="switchChatRoom('${r.route_id}','${r.route_number}','${r.from_city}','${r.to_city}',this)">
+      ${rooms.map((r, i) => {
+        const active = i === 0 ? 'active' : '';
+        return `<div class="chat-room-item ${active}" data-rid="${String(r.route_id)}" data-num="${String(r.route_number)}" data-from="${String(r.from_city)}" data-to="${String(r.to_city)}" data-action="switch-chat" onclick="switchChatRoom(this.dataset.rid,this.dataset.num,this.dataset.from,this.dataset.to,this)">
         <div class="chat-room-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><rect x="1" y="3" width="22" height="14" rx="2"/><path d="M1 10h22"/></svg></div>
-        <div><div class="chat-room-name">${r.route_number}</div><div class="chat-room-sub">${r.from_city} → ${r.to_city}</div></div>
-      </div>`).join('')}
+        <div><div class="chat-room-name">${String(r.route_number)}</div><div class="chat-room-sub">${String(r.from_city)} → ${String(r.to_city)}</div></div>
+      </div>`;
+      }).join('')}
     </div>
     <div class="chat-main">
       <div class="chat-header">
@@ -1170,7 +1192,7 @@ function buildDriverDashboard(a) {
         <button class="btn btn-outline-gold btn-sm" onclick="dTab('routes')">View All</button>
       </div>
       ${a.upcoming_routes.length ? a.upcoming_routes.map(r => `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)">
-        <div><div style="font-weight:600;font-size:.9rem;color:var(--navy)">${r.from_city} → ${r.to_city}</div><div class="text-xs text-muted">${r.departure_date} · ${r.departure_time} · <span class="route-num">${r.route_number}</span></div></div>
+        <div><div style="font-weight:600;font-size:.9rem;color:var(--navy)">${String(r.from_city)} → ${String(r.to_city)}</div><div class="text-xs text-muted">${String(r.departure_date)} · ${String(r.departure_time)} · <span class="route-num">${String(r.route_number)}</span></div></div>
         <button class="btn btn-outline-gold btn-sm" onclick="dTab('checkin')">Check-In</button>
       </div>`).join('') : '<div class="text-sm text-muted">No upcoming routes</div>'}
     </div>
@@ -1203,20 +1225,22 @@ async function renderDriverRoutes() {
 }
 
 function buildDriverRoutesPage(routes) {
-  return `
+  let html = `
   <div class="page-header"><div><div class="page-title">My Routes</div><div class="page-sub">All your posted routes</div></div><button class="btn btn-gold" onclick="dTab('create')">+ New Route</button></div>
   <div class="tabs"><div class="tab active">Active</div><div class="tab">Completed</div><div class="tab">Draft</div></div>
-  <div class="routes-grid">
-    ${routes.length ? routes.map(r => `<div class="route-card">
+  <div class="routes-grid">`;
+  if (routes.length) {
+    routes.forEach(r => {
+      html += `<div class="route-card">
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span class="city-name">${r.from_city}</span><span class="route-arrow">→</span><span class="city-name">${r.to_city}</span>
-          <span class="route-num">${r.route_number}</span>
+          <span class="city-name">${String(r.from_city)}</span><span class="route-arrow">→</span><span class="city-name">${String(r.to_city)}</span>
+          <span class="route-num">${String(r.route_number)}</span>
         </div>
         <div class="route-meta">
-          <span class="route-meta-item">📅 ${r.departure_date}</span>
-          <span class="route-meta-item">🕐 ${r.departure_time}</span>
-          <span class="route-meta-item">👥 ${r.booked_seats}/${r.total_seats} booked</span>
+          <span class="route-meta-item">📅 ${String(r.departure_date)}</span>
+          <span class="route-meta-item">🕐 ${String(r.departure_time)}</span>
+          <span class="route-meta-item">👥 ${String(r.booked_seats)}/${String(r.total_seats)} booked</span>
         </div>
         <div style="margin-top:8px"><div class="progress-bar" style="max-width:200px"><div class="progress-fill" style="width:${Math.round((r.booked_seats/r.total_seats)*100)}%"></div></div></div>
       </div>
@@ -1225,11 +1249,14 @@ function buildDriverRoutesPage(routes) {
         <div class="route-seats">est. revenue</div>
         <div style="display:flex;gap:6px;margin-top:8px">
           <button class="btn btn-outline-gold btn-sm" onclick="dTab('checkin')">Check-In</button>
-          <button class="btn btn-sm" style="background:var(--gray-100);color:var(--navy)" onclick="openSendNotif('${r.id}')">Notify</button>
+          <button class="btn btn-sm" style="background:var(--gray-100);color:var(--navy)" data-rid="${r.id}" onclick="openSendNotif(this.dataset.rid)">Notify</button>
         </div>
       </div>
-    </div>
-  </div>`;
+    </div>`;
+    });
+  }
+  html += `</div>`;
+  return html;
 }
 
 // ─── DRIVER: CREATE ROUTE ────────────────────────────────
@@ -1489,7 +1516,7 @@ async function renderRequested() {
 }
 
 function buildRequestedPage(reqs) {
-  return `
+  let html = `
   <div class="page-header"><div><div class="page-title">Passenger Requests</div><div class="page-sub">Routes requested by passengers</div></div></div>
   <div class="filter-bar">
     <span class="filter-label">Sort:</span>
@@ -1498,32 +1525,38 @@ function buildRequestedPage(reqs) {
     <div class="filter-chip" onclick="openFilterPanel('arrival')">Arrival</div>
     <div class="filter-chip" onclick="openFilterPanel('date')">Date</div>
   </div>
-  <div style="display:flex;flex-direction:column;gap:12px">
-    ${reqs.sort((a, b) => b.supporter_count - a.supporter_count).map(r => `
+  <div style="display:flex;flex-direction:column;gap:12px">`;
+  const sorted = reqs.sort((a, b) => b.supporter_count - a.supporter_count);
+  sorted.forEach(r => {
+    const pct = Math.min(100, Math.round(r.supporter_count / 25 * 100));
+    html += `
     <div class="card card-sm" style="display:grid;grid-template-columns:1fr 80px auto;gap:16px;align-items:center">
       <div>
-        <div style="font-weight:600;color:var(--navy);margin-bottom:4px">${r.from_city} → ${r.to_city}</div>
+        <div style="font-weight:600;color:var(--navy);margin-bottom:4px">${String(r.from_city)} → ${String(r.to_city)}</div>
         <div class="text-sm text-muted">${r.requested_date || 'Flexible'} · ${r.requested_time || 'Any time'} · by ${r.requester_name}</div>
-        <div class="progress-bar mt-8" style="margin-top:8px;max-width:200px"><div class="progress-fill" style="width:${Math.min(100, Math.round(r.supporter_count / 25 * 100))}%"></div></div>
+        <div class="progress-bar mt-8" style="margin-top:8px;max-width:200px"><div class="progress-fill" style="width:${pct}%"></div></div>
       </div>
       <div style="text-align:center">
-        <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--navy)">${r.supporter_count}</div>
+        <div style="font-family:Playfair Display,serif;font-size:1.4rem;font-weight:700;color:var(--navy)">${r.supporter_count}</div>
         <div class="text-xs text-muted">interested</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="btn btn-gold btn-sm" onclick="acceptRequest('${r.from_city}','${r.to_city}','${r.requested_date}','${r.requested_time}')">Accept & Create</button>
+        <button class="btn btn-gold btn-sm" data-from="${String(r.from_city)}" data-to="${String(r.to_city)}" data-date="${String(r.requested_date)}" data-time="${String(r.requested_time)}" data-action="accept-req">Accept & Create</button>
         <button class="btn btn-sm" style="background:var(--gray-100);color:var(--navy)">Decline</button>
       </div>
-      <div class="card">
-        <div class="section-title">Payment Methods</div>
-        <div style="text-align:center;padding:20px;color:var(--gray-400)">
-          <div style="font-size:2rem;margin-bottom:8px">💳</div>
-          <div class="text-sm text-muted">Payment method setup coming soon.</div>
-          <div class="text-xs text-muted" style="margin-top:4px">You'll be able to securely add and manage payment methods here.</div>
-        </div>
-      </div>
+    </div>`;
+  });
+  html += `
+  </div>
+  <div class="card" style="margin-top:24px">
+    <div class="section-title">Payment Methods</div>
+    <div style="text-align:center;padding:20px;color:var(--gray-400)">
+      <div style="font-size:2rem;margin-bottom:8px">&#x1F4B3;</div>
+      <div class="text-sm text-muted">Payment method setup coming soon.</div>
+      <div class="text-xs text-muted" style="margin-top:4px">You will be able to securely add and manage payment methods here.</div>
     </div>
   </div>`;
+  return html;
 }
 
 function acceptRequest(from, to, date, time) {
@@ -1541,7 +1574,7 @@ async function openSendNotif(routeId) {
     <div class="form-group">
       <label class="form-label" style="color:var(--navy)">Route</label>
       <select class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="notif-route">
-        ${routes.map(r => `<option value="${r.id}" ${(routeId && r.id === routeId) || (!routeId && r === routes[0]) ? 'selected' : ''}>${r.route_number} — ${r.from_city} → ${r.to_city}</option>`).join('')}
+        ${routes.map(r => `<option value="${r.id}" ${(routeId && r.id === routeId) || (!routeId && r === routes[0]) ? 'selected' : ''}>${String(r.route_number)} — ${String(r.from_city)} → ${String(r.to_city)}</option>`).join('')}
       </select>
     </div>
     <div class="form-group">
