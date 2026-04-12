@@ -300,11 +300,11 @@ function buildRoutesPage(routes, reqs) {
       <div class="filter-bar" style="flex:1;margin-bottom:0">
         <span class="filter-label">Sort:</span>
         <div class="filter-chip active">Most Supported</div>
-        <div class="filter-chip" onclick="openFilterPanel('departure')">Departure</div>
-        <div class="filter-chip" onclick="openFilterPanel('arrival')">Arrival</div>
-        <div class="filter-chip" onclick="openFilterPanel('date')">Date</div>
-        <div class="filter-chip" onclick="openFilterPanel('time')">Time of Day</div>
-        <div class="filter-chip" onclick="clearRequestFilters()" style="background:var(--error);color:white;border-color:var(--error)">✕ Clear</div>
+        <div class="filter-chip" onclick="openFilterPanel('departure')">${ICON.pin()} Departure</div>
+        <div class="filter-chip" onclick="openFilterPanel('arrival')">${ICON.pin()} Arrival</div>
+        <div class="filter-chip" onclick="openFilterPanel('date')">${ICON.calendar()} Date</div>
+        <div class="filter-chip" onclick="openFilterPanel('time')">${ICON.clock()} Time of Day</div>
+        <div class="filter-chip" id="clear-req-filters-btn" onclick="clearRequestFilters()" style="background:var(--error);color:white;border-color:var(--error);display:none">✕ Clear</div>
       </div>
       <button class="btn btn-gold" onclick="openRequestWizard()">+ Request Route</button>
     </div>
@@ -424,7 +424,7 @@ function openFilterPanel(type) {
   } else if (type === 'time') {
     html = `<p style="font-size:.82rem;color:var(--gray-400);margin-bottom:10px">Filter by departure time of day:</p><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">${TIMES.map(t => {
       const isActive = savedFilters.time.includes(t);
-      return `<div style="padding:8px 6px;text-align:center;border:1px solid ${isActive ? 'var(--gold)' : 'var(--gray-200)'};border-radius:8px;font-size:.78rem;cursor:pointer;transition:var(--transition);background:${isActive ? 'var(--gold)' : ''};color:${isActive ? 'var(--navy-dark)' : ''}" class="${isActive ? 'active' : ''}" onclick="this.classList.toggle('active');this.style.background=this.classList.contains('active')?'var(--gold)':'';this.style.color=this.classList.contains('active')?'var(--navy-dark)':'';this.style.borderColor=this.classList.contains('active')?'var(--gold)':'var(--gray-200)';">${t}</div>`;
+      return `<div style="padding:8px 6px;text-align:center;border:1px solid ${isActive ? 'var(--gold)' : 'var(--gray-200)'};border-radius:8px;font-size:.78rem;cursor:pointer;transition:var(--transition);background:${isActive ? 'var(--gold)' : 'var(--white)'};color:var(--navy-dark)" class="${isActive ? 'active' : ''}" onclick="this.classList.toggle('active');this.style.background=this.classList.contains('active')?'var(--gold)':'var(--white)';this.style.borderColor=this.classList.contains('active')?'var(--gold)':'var(--gray-200)';">${t}</div>`;
     }).join('')}</div>`;
   } else if (type === 'seats') {
     html = `<input type="number" min="1" max="44" placeholder="e.g. 4" style="width:100%;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:8px;padding:10px 14px;font-size:.9rem;color:var(--navy-dark)" id="fp-seats" value="${savedFilters.seats}">`;
@@ -595,6 +595,8 @@ function applyRequestFilters() {
   reqList.innerHTML = filtered.map(buildReqCard).join('') || emptyState('No requests match your filter');
   toast('Filter applied', 'success');
   updateClearFilterBtn();
+  const clearBtn = document.getElementById('clear-req-filters-btn');
+  if (clearBtn) clearBtn.style.display = '';
 }
 
 function clearRequestFilters() {
@@ -608,6 +610,8 @@ function clearRequestFilters() {
   if (reqList && S.requests) {
     reqList.innerHTML = S.requests.map(buildReqCard).join('') || emptyState('No requests yet');
   }
+  const clearBtn = document.getElementById('clear-req-filters-btn');
+  if (clearBtn) clearBtn.style.display = 'none';
   toast('Filters cleared', 'success');
 }
 
@@ -810,7 +814,7 @@ async function renderTickets() {
   try {
     const bookings = await api('GET', '/bookings/mine');
     S.allBookings = bookings;
-    document.getElementById('p-content').innerHTML = buildTicketsPage(bookings);
+    document.getElementById('p-content').innerHTML = buildTicketsPage(bookings, 'active');
     bookings.forEach(b => {
       const canvas = document.getElementById(`qr-mini-${b.id}`);
       if (canvas && typeof QRCode !== 'undefined') {
@@ -820,13 +824,27 @@ async function renderTickets() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-function buildTicketsPage(bookings) {
+function buildTicketsPage(bookings, activeTab) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const active = bookings.filter(b => {
+    const d = new Date(b.departure_date + 'T23:59:59');
+    return d >= today;
+  });
+  const inactive = bookings.filter(b => {
+    const d = new Date(b.departure_date + 'T23:59:59');
+    return d < today;
+  });
+  const showing = activeTab === 'active' ? active : inactive;
   if (!bookings.length) return `<div class="page-header"><div><div class="page-title">My Tickets</div></div></div>${emptyState('No tickets yet — book a route!')}`;
   return `
   <div class="page-header"><div><div class="page-title">My Tickets</div><div class="page-sub">Tap a ticket to view QR code</div></div></div>
-  <div class="tabs"><div class="tab active" onclick="switchTicketTab('upcoming')">Active Tickets</div><div class="tab" onclick="switchTicketTab('past')">Inactive Tickets</div></div>
+  <div class="tabs">
+    <div class="tab ${activeTab === 'active' ? 'active' : ''}" onclick="showTicketTab('active')">Active Tickets</div>
+    <div class="tab ${activeTab === 'inactive' ? 'active' : ''}" onclick="showTicketTab('inactive')">Inactive Tickets</div>
+  </div>
   <div style="display:flex;flex-direction:column;gap:12px" id="tickets-list">
-    ${bookings.map(b => buildTicketCard(b)).join('')}
+    ${showing.length ? showing.map(b => buildTicketCard(b)).join('') : emptyState(activeTab === 'active' ? 'No active tickets — book a route!' : 'No inactive tickets. Your completed trips will appear here.')}
   </div>`;
 }
 
@@ -842,7 +860,7 @@ function buildTicketCard(b) {
         <div style="color:var(--gold);font-size:1.2rem;flex:1;text-align:center">→</div>
         <div style="text-align:right"><div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy)">${b.to_city}</div><div class="text-xs text-muted">${b.arrival_time}</div></div>
       </div>
-      <div style="display:flex;gap:14px;font-size:.78rem;color:var(--gray-400)"><span>${ICON.calendar()} ${b.departure_date}</span><span>${ICON.seat()} Seat ${b.seat_number}</span><span>${ICON.driver()} ${b.driver_name}</span></div>
+      <div style="display:flex;gap:14px;font-size:.78rem;color:var(--gray-400)"><span style="display:inline-flex;align-items:center;gap:4px">${ICON.calendar()} ${b.departure_date}</span><span style="display:inline-flex;align-items:center;gap:4px">${ICON.seat()} Seat ${b.seat_number}</span><span style="display:inline-flex;align-items:center;gap:4px">${ICON.driver()} ${b.driver_name}</span></div>
     </div>
     <div style="background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:8px">
       <div style="font-size:.6rem;color:rgba(255,255,255,.5);letter-spacing:.08em">SCAN</div>
@@ -852,29 +870,16 @@ function buildTicketCard(b) {
   </div>`;
 }
 
-function switchTicketTab(tab) {
-  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  const list = document.getElementById('tickets-list');
-  if (!list) return;
-  const bookings = S.allBookings || [];
-  const now = new Date();
-  let filtered;
-  if (tab === 'past') {
-    filtered = bookings.filter(b => new Date(b.departure_date) < now);
-    if (!filtered.length) {
-      list.innerHTML = filtered.map(b => buildTicketCard(b)).join('') || emptyState('No former tickets. Your completed trips will appear here.');
-      return;
-    }
-  } else {
-    filtered = bookings.filter(b => new Date(b.departure_date) >= now);
-    if (!filtered.length) {
-      list.innerHTML = filtered.map(b => buildTicketCard(b)).join('') || emptyState('No active tickets — book a route!');
-      return;
-    }
-  }
-  list.innerHTML = filtered.map(b => buildTicketCard(b)).join('');
-  filtered.forEach(b => {
+function showTicketTab(tab) {
+  if (!S.allBookings) return;
+  document.getElementById('p-content').innerHTML = buildTicketsPage(S.allBookings, tab);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const showing = S.allBookings.filter(b => {
+    const d = new Date(b.departure_date + 'T23:59:59');
+    return (tab === 'active') ? d >= today : d < today;
+  });
+  showing.forEach(b => {
     const canvas = document.getElementById(`qr-mini-${b.id}`);
     if (canvas && typeof QRCode !== 'undefined') {
       QRCode.toCanvas(canvas, `dormtohome:ticket:${b.id}`, { width: 60, margin: 1, color: { dark: '#0B1D3A', light: '#FFFFFF' } });
