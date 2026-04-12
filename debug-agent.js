@@ -23,25 +23,51 @@ async function waitForPage(page, selector, timeout = 5000) {
 }
 
 async function loginAsPassenger(page) {
+  const testEmail = `passenger_test@test.com`;
+  const testPass = 'TestPass123';
+  
+  // Seed test users via dev endpoint (bypasses rate limiter + Supabase email confirm)
+  try {
+    await fetch(`${BASE_URL}/dev/seed-test-users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch(e) {}
+  
+  await page.waitForTimeout(2000);
+  
+  // Login via browser
   await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 });
   await page.click('button:has-text("Sign In")');
   await page.waitForTimeout(1000);
-  await page.fill('#login-email', 'alex@tamu.edu');
-  await page.fill('#login-pass', 'password123');
+  await page.fill('#login-email', testEmail);
+  await page.fill('#login-pass', testPass);
   await page.click('#login-btn');
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(4000);
   return page;
 }
 
 async function loginAsDriver(page) {
+  const testEmail = `driver_test@test.com`;
+  const testPass = 'TestPass123';
+  
+  try {
+    await fetch(`${BASE_URL}/dev/seed-test-users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch(e) {}
+  
+  await page.waitForTimeout(2000);
+  
   await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 30000 });
   await page.click('button:has-text("Sign In")');
   await page.waitForTimeout(1000);
   await page.click('#lt-driver');
-  await page.fill('#login-email', 'marcus@dormtohome.com');
-  await page.fill('#login-pass', 'password123');
+  await page.fill('#login-email', testEmail);
+  await page.fill('#login-pass', testPass);
   await page.click('#login-btn');
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(4000);
   return page;
 }
 
@@ -88,8 +114,8 @@ async function testLoginFlow() {
     await page.click('button:has-text("Sign In")');
     await page.waitForTimeout(2000);
     
-    await page.fill('#login-email', 'alex@tamu.edu');
-    await page.fill('#login-pass', 'password123');
+    await page.fill('#login-email', 'passenger_test@test.com');
+    await page.fill('#login-pass', 'TestPass123');
     await page.click('#login-btn');
     await page.waitForTimeout(5000);
     
@@ -148,7 +174,7 @@ async function testLoginWrongPassword() {
     await page.click('button:has-text("Sign In")');
     await page.waitForTimeout(1000);
     
-    await page.fill('#login-email', 'alex@tamu.edu');
+    await page.fill('#login-email', 'passenger_test@test.com');
     await page.fill('#login-pass', 'wrongpassword');
     await page.click('#login-btn');
     await page.waitForTimeout(3000);

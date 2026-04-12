@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const { initDatabase, all, get, run } = require('./db/database');
+const { supabase } = require('./db/supabase');
 const { v4: uuidv4 } = require('uuid');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dormtohome-secret-change-in-production';
@@ -37,6 +38,35 @@ app.post('/api/auth/register', signupLimiter);
 app.use('/api/auth', authRouter);
 app.use('/api/routes', require('./routes/routes'));
 app.use('/api', require('./routes/api'));
+app.post('/dev/seed-test-users', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') return res.status(403).json({ error: 'Not available in production' });
+  try {
+    const testUsers = [
+      { email: 'passenger_test@test.com', password: 'TestPass123', first_name: 'Test', last_name: 'Passenger', phone: '5551234567', role: 'passenger' },
+      { email: 'driver_test@test.com',    password: 'TestPass123', first_name: 'Test', last_name: 'Driver',    phone: '5557654321', role: 'driver'    },
+    ];
+    const results = [];
+    for (const u of testUsers) {
+      const { data: authData, error } = await supabase.auth.admin.createUser({
+        email: u.email, password: u.password,
+        email_confirm: true, // skip email verification for dev testing
+        user_metadata: { first_name: u.first_name, last_name: u.last_name, phone: u.phone, role: u.role }
+      });
+      if (error && !error.message.includes('already been registered')) {
+        console.error('[dev-seed] Error creating', u.email, error.message);
+        results.push({ email: u.email, error: error.message });
+        continue;
+      }
+      const userId = authData?.user?.id;
+      if (userId) {
+        await run(`INSERT INTO users (id,first_name,last_name,email,phone,"role") VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO UPDATE SET first_name=$2, last_name=$3`,
+          [userId, u.first_name, u.last_name, u.email, u.phone, u.role]);
+      }
+      results.push({ email: u.email, success: true });
+    }
+    res.json({ message: 'Test users seeded', results });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // ─── SOCKET.IO ────────────────────────────────────────────
