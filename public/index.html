@@ -246,7 +246,76 @@ hr.divider{border:none;border-top:1px solid var(--gray-200);margin:20px 0}
 select.form-input{cursor:pointer;color:var(--white)}
 select.form-input option{color:var(--navy-dark)}
 .dark-select{background:rgba(255,255,255,.06)!important}
-</style>
+.mobile-menu-btn{display:none}
+@media (max-width:768px){
+:root{--radius:8px;--radius-lg:14px}
+html{font-size:15px}
+.landing-nav{padding:16px 16px}
+.logo-text{font-size:1.1rem}
+.logo-mark{width:32px;height:32px}
+.logo-mark svg{width:18px;height:18px}
+.hero-title{font-size:2rem}
+.hero-sub{font-size:.95rem}
+.hero-search-box{padding:16px}
+.search-row{grid-template-columns:1fr 1fr;gap:10px}
+.search-row button{grid-column:span 2}
+.search-field label{font-size:.7rem}
+.hero-stats{gap:20px;flex-wrap:wrap;justify-content:center}
+.stat-num{font-size:1.4rem}
+.stat{padding:8px}
+.auth-card{padding:24px 20px}
+.type-selector{grid-template-columns:1fr;gap:8px}
+.type-option{padding:12px}
+.two-col{grid-template-columns:1fr}
+.page-content{padding:16px}
+.page-title{font-size:1.3rem}
+.app-header{padding:0 12px;height:56px;gap:8px}
+.app-header .logo-text{font-size:1rem}
+.header-nav{display:none;position:absolute;top:56px;left:0;right:0;background:var(--navy);flex-direction:column;padding:12px;gap:4px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.header-nav.open{display:flex}
+.mobile-menu-btn{display:block;width:36px;height:36px;background:rgba(255,255,255,.1);border:none;border-radius:8px;cursor:pointer;color:var(--white);font-size:1.2rem;margin-left:8px}
+.routes-grid{gap:10px}
+.route-card{padding:14px;grid-template-columns:1fr}
+.route-price{font-size:1.2rem}
+.card{padding:16px}
+.filter-bar{padding:10px 12px;overflow-x:auto}
+.filter-chip{font-size:.75rem;padding:5px 10px}
+.analytics-grid{grid-template-columns:1fr 1fr;gap:10px}
+.analytics-card{padding:14px}
+.analytics-val{font-size:1.4rem}
+.analytics-label{font-size:.75rem}
+.chat-layout{grid-template-columns:1fr;height:auto}
+.chat-sidebar{display:none;position:fixed;inset:0;background:var(--white);z-index:50;overflow-y:auto}
+.chat-sidebar.open{display:block}
+.chat-main{height:calc(100vh - 140px)}
+.chat-messages{max-height:calc(100vh - 200px)}
+.modal{max-width:95%;margin:12px}
+.modal-body{padding:16px}
+.modal-header{padding:16px 16px 0}
+.steps-bar{overflow-x:auto;padding-bottom:8px}
+.step-label{display:none}
+.seat-map{justify-content:center}
+.seat{width:32px;height:32px;font-size:.65rem}
+.page-header{flex-direction:column;gap:12px}
+.req-card{grid-template-columns:1fr;gap:10px}
+.landing-hero{padding:40px 16px 60px}
+.hero-search-box{margin-bottom:32px}
+.btn-lg{padding:12px 24px}
+.tabs{overflow-x:auto;white-space:nowrap}
+.tab{padding:8px 14px;font-size:.8rem}
+}
+@media (max-width:480px){
+.hero-stats{flex-direction:column;gap:12px}
+.analytics-grid{grid-template-columns:1fr}
+.app-header .logo-text{display:none}
+.header-right{gap:8px}
+.notif-btn{width:32px;height:32px}
+.avatar{width:32px;height:32px;font-size:.75rem}
+.page-content{padding:12px}
+.card{padding:14px}
+.btn-full{width:100%}
+.auth-card{max-width:100%}
+}
 </head>
 <body>
 <div class="toast-container" id="toastContainer"></div>
@@ -378,8 +447,9 @@ select.form-input option{color:var(--navy-dark)}
 <div class="screen" id="screen-passenger">
   <div class="app-layout">
     <header class="app-header">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="20" height="12" rx="2" opacity=".3"/><path d="M2 14V7a2 2 0 012-2h16a2 2 0 012 2v7M1 14h22M5 17v2M19 17v2"/></svg></div><span class="logo-text">Dorm<span>ToHome</span></span></div>
-      <nav class="header-nav">
+      <button class="mobile-menu-btn" onclick="document.querySelector('#screen-passenger .header-nav').classList.toggle('open')">☰</button>
+      <div class="logo" onclick="showScreen('screen-landing')"><div class="logo-mark"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="20" height="12" rx="2" opacity=".3"/><path d="M2 14V7a2 2 0 012-2h16a2 2 0 012 2v7M1 14h22M5 17v2M19 17v2"/></svg></div><span class="logo-text">Dorm<span>ToHome</span></span></div>
+      <nav class="header-nav" onclick="event.target.closest('.header-nav').classList.remove('open')">
         <div class="nav-item active" onclick="pTab('routes')" data-tab="routes">Routes</div>
         <div class="nav-item" onclick="pTab('active')" data-tab="active">Active Trips</div>
         <div class="nav-item" onclick="pTab('tickets')" data-tab="tickets">My Tickets</div>
@@ -399,8 +469,9 @@ select.form-input option{color:var(--navy-dark)}
 <div class="screen" id="screen-driver">
   <div class="app-layout">
     <header class="app-header">
-      <div class="logo"><div class="logo-mark"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="20" height="12" rx="2" opacity=".3"/><path d="M2 14V7a2 2 0 012-2h16a2 2 0 012 2v7M1 14h22M5 17v2M19 17v2"/></svg></div><span class="logo-text">Dorm<span>ToHome</span></span></div>
-      <nav class="header-nav">
+      <button class="mobile-menu-btn" onclick="document.querySelector('#screen-driver .header-nav').classList.toggle('open')">☰</button>
+      <div class="logo" onclick="showScreen('screen-landing')"><div class="logo-mark"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="5" width="20" height="12" rx="2" opacity=".3"/><path d="M2 14V7a2 2 0 012-2h16a2 2 0 012 2v7M1 14h22M5 17v2M19 17v2"/></svg></div><span class="logo-text">Dorm<span>ToHome</span></span></div>
+      <nav class="header-nav" onclick="event.target.closest('.header-nav').classList.remove('open')">
         <div class="nav-item active" onclick="dTab('dashboard')" data-tab="dashboard">Dashboard</div>
         <div class="nav-item" onclick="dTab('routes')" data-tab="routes">My Routes</div>
         <div class="nav-item" onclick="dTab('create')" data-tab="create">New Route</div>
