@@ -26,7 +26,8 @@ const rateLimit = require('express-rate-limit');
 const isDev = process.env.NODE_ENV !== 'production';
 const signupLimiter = rateLimit({
   windowMs: isDev ? 60 * 1000 : 15 * 60 * 1000,
-  max: isDev ? 100 : 20,
+  max: isDev ? 1000 : 50,
+  skip: (req) => isDev,
   message: { error: 'Too many accounts created. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
