@@ -23,9 +23,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const rateLimit = require('express-rate-limit');
+const isDev = process.env.NODE_ENV !== 'production';
 const signupLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
+  windowMs: isDev ? 60 * 1000 : 15 * 60 * 1000,
+  max: isDev ? 100 : 20,
   message: { error: 'Too many accounts created. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
