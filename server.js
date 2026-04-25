@@ -204,7 +204,13 @@ process.on('SIGINT',  () => shutdown('SIGINT'));
 
 // ─── START ────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-initDatabase().then(() => {
+
+async function start() {
+  try {
+    await initDatabase();
+  } catch (err) {
+    console.warn('⚠️  Database unavailable, running in demo mode');
+  }
   server.listen(PORT, () => {
     console.log(`\n🚌  DormToHome running on http://localhost:${PORT}`);
     console.log(`    ENV: ${process.env.NODE_ENV || 'development'}`);
@@ -212,4 +218,6 @@ initDatabase().then(() => {
     console.log(`    Passenger → alex@tamu.edu`);
     console.log(`    Driver    → marcus@dormtohome.com\n`);
   });
-}).catch(err => { console.error('Failed to start:', err); process.exit(1); });
+}
+
+start();
