@@ -237,9 +237,27 @@ async function seedDatabase() {
   console.log('[DB] Seed complete');
 }
 
+// ─── DROP ────────────────────────────────────────────────
+async function dropAllTables() {
+  await pool.query(`
+    DROP TABLE IF EXISTS driver_location      CASCADE;
+    DROP TABLE IF EXISTS notifications        CASCADE;
+    DROP TABLE IF EXISTS messages             CASCADE;
+    DROP TABLE IF EXISTS route_request_supports CASCADE;
+    DROP TABLE IF EXISTS route_requests       CASCADE;
+    DROP TABLE IF EXISTS bookings             CASCADE;
+    DROP TABLE IF EXISTS route_stops          CASCADE;
+    DROP TABLE IF EXISTS guardians            CASCADE;
+    DROP TABLE IF EXISTS routes               CASCADE;
+    DROP TABLE IF EXISTS users                CASCADE;
+  `);
+  console.log('[DB] All tables dropped');
+}
+
 // ─── INIT ────────────────────────────────────────────────
 async function initDatabase() {
   try {
+    await dropAllTables();
     await createSchema();
     await seedDatabase();
     console.log('[DB] Ready');
