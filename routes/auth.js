@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { all, get, run } = require('../db/database');
 const { authMiddleware } = require('../middleware/auth');
-const { supabase } = require('../db/supabase');
 
 const getSecret = (req) =>
   (req.app && req.app.locals.JWT_SECRET) ||
@@ -40,55 +40,16 @@ router.post('/register', async (req, res) => {
     }
 
     console.log('[REGISTER] Checking existing user:', trimmedEmail);
-    const { data: existingUser, error: checkError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', trimmedEmail)
-      .maybeSingle();
-
-    if (checkError) {
-      console.error('[REGISTER] Check error:', checkError);
-    }
+    const existingUser = await get('SELECT id FROM users WHERE email = $1', [trimmedEmail]);
     if (existingUser) return res.status(409).json({ error: 'Email already registered' });
 
-    console.log('[REGISTER] Creating Supabase auth user:', trimmedEmail);
-    let userId;
-    let authError;
+    console.log('[REGISTER] Creating user:', trimmedEmail);
+    const userId = uuidv4();
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    try {
-      const { data: authData, error } = await supabase.auth.admin.createUser({
-        email: trimmedEmail,
-        password,
-        email_confirm: true,
-        user_metadata: { first_name, last_name, phone, role }
-      });
-      authError = error;
-      if (authData?.user) userId = authData.user.id;
-    } catch {
-      console.log('[REGISTER] Falling back to signUp (admin.createUser unavailable)');
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password,
-        options: { data: { first_name, last_name, phone, role } }
-      });
-      authError = error;
-      if (authData?.user) userId = authData.user.id;
-    }
-
-    if (authError) {
-      console.error('[REGISTER] Auth error:', authError);
-      if (authError.message?.includes('already been registered') || authError.message?.includes('already registered')) {
-        return res.status(409).json({ error: 'Email already registered' });
-      }
-      return res.status(400).json({ error: authError.message });
-    }
-
-    if (!userId) return res.status(500).json({ error: 'Failed to create user' });
-
-    console.log('[REGISTER] Creating profile for:', userId);
     await run(
-      `INSERT INTO users (id,first_name,last_name,email,phone,"role") VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO UPDATE SET first_name=$2, last_name=$3`,
-      [userId, first_name, last_name, trimmedEmail, phone || '', role]
+      `INSERT INTO users (id,first_name,last_name,email,phone,password,"role") VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [userId, first_name, last_name, trimmedEmail, phone || '', hashedPassword, role]
     );
 
     if (role === 'passenger' && (guardian_email || guardian_phone)) {
@@ -109,63 +70,41 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
 
-    const { data: authData, error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password
-    });
+    const trimmedEmail = email.trim();
+    const user = await get(
+      'SELECT id, first_name, last_name, email, phone, password, "role" FROM users WHERE email = $1',
+      [trimmedEmail]
+    );
 
-    if (error) {
-      const msg = error.message?.toLowerCase() || '';
-      if (msg.includes('email not confirmed') || msg.includes('email not verified')) {
-        return res.status(401).json({ error: 'Please verify your email before signing in.' });
-      }
-      return res.status(401).json({ error: 'Invalid email or password.' });
-    }
+    if (!user) return res.status(401).json({ error: 'Invalid email or password.' });
 
-    const user = authData.user;
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error('[LOGIN] Profile fetch error:', profileError);
-    }
-
-    if (!profile) {
-      console.log('[LOGIN] Profile not found for user, creating from auth metadata');
-      const meta = user.user_metadata || {};
-      await run(
-        `INSERT INTO users (id,first_name,last_name,email,phone,"role") VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING`,
-        [user.id, meta.first_name || '', meta.last_name || '', user.email, meta.phone || '', meta.role || 'passenger']
-      );
-    }
-
-    const p = profile || { first_name: user.user_metadata?.first_name || '', last_name: user.user_metadata?.last_name || '', role: user.user_metadata?.role || 'passenger' };
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(401).json({ error: 'Invalid email or password.' });
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: p.role, first_name: p.first_name, last_name: p.last_name },
+      { id: user.id, email: user.email, role: user.role, first_name: user.first_name, last_name: user.last_name },
       getSecret(req), { expiresIn: '30d' }
     );
 
-    res.json({ token, user: { id: user.id, first_name: p.first_name, last_name: p.last_name, email: user.email, role: p.role } });
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    const { data: profile, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', req.user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error('[ME] Profile fetch error:', error);
-    }
+    const profile = await get('SELECT * FROM users WHERE id = $1', [req.user.id]);
     if (!profile) return res.status(404).json({ error: 'User not found' });
-    res.json(profile);
+    const { password, ...safe } = profile;
+    res.json(safe);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -174,20 +113,17 @@ router.put('/me', authMiddleware, async (req, res) => {
     const { first_name, last_name, phone } = req.body;
     if (!first_name || !last_name) return res.status(400).json({ error: 'Name required' });
     
-    await supabase
-      .from('users')
-      .update({ first_name, last_name, phone: phone || '' })
-      .eq('id', req.user.id);
+    await run(
+      'UPDATE users SET first_name = $1, last_name = $2, phone = $3 WHERE id = $4',
+      [first_name, last_name, phone || '', req.user.id]
+    );
 
     res.json({ success: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 router.post('/logout', async (req, res) => {
-  try {
-    await supabase.auth.signOut();
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+  res.json({ success: true });
 });
 
 module.exports = router;
