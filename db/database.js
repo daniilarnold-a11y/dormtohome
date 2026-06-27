@@ -7,9 +7,23 @@ function generateToken() {
 }
 module.exports.generateToken = generateToken;
 
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error('[DB] FATAL: DATABASE_URL environment variable is not set');
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  connectionString: DATABASE_URL,
+  ssl: DATABASE_URL && DATABASE_URL.includes('supabase.co')
+    ? { rejectUnauthorized: false, require: true }
+    : DATABASE_URL
+      ? { rejectUnauthorized: false }
+      : undefined,
+  connectionTimeoutMillis: 10000,
+});
+
+pool.on('error', (err) => {
+  console.error('[DB] Pool error:', err.message);
 });
 
 // ─── QUERY HELPERS ───────────────────────────────────────
@@ -224,9 +238,15 @@ async function seedDatabase() {
 
 // ─── INIT ────────────────────────────────────────────────
 async function initDatabase() {
-  await createSchema();
-  await seedDatabase();
-  console.log('[DB] Ready');
+  try {
+    await createSchema();
+    await seedDatabase();
+    console.log('[DB] Ready');
+  } catch (err) {
+    console.error('[DB] initDatabase failed:', err.message);
+    if (err.stack) console.error('[DB] Stack:', err.stack.split('\n').slice(0, 4).join('\n'));
+    throw err;
+  }
 }
 
 module.exports = { initDatabase, all, get, run, pool };

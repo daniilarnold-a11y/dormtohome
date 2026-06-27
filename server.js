@@ -211,6 +211,7 @@ async function start() {
     await initDatabase();
   } catch (err) {
     console.warn('⚠️  Database unavailable, running in demo mode');
+    console.warn('   Reason:', err.message);
   }
   server.listen(PORT, () => {
     console.log(`\n🚌  DormToHome running on http://localhost:${PORT}`);
