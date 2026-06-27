@@ -224,9 +224,15 @@ function setAvatarInitials(id, user) {
 }
 
 // ─── SCREEN ROUTING ───────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
 }
 
 // ─── PASSENGER TABS ───────────────────────────────────────
@@ -348,7 +354,7 @@ function buildRouteCard(r) {
         <span class="route-num">${String(r.route_number)}</span>
       </div>
       <div class="route-meta">
-        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${String(r.departure_date)}</span>
+        <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${fmtDate(r.departure_date)}</span>
         <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${String(r.departure_time)} – ${String(r.arrival_time)}</span>
         <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>${String(r.duration)}</span>
         <span class="route-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 20v-2a7 7 0 0114 0v2"/></svg>${String(r.available_seats)} seats left</span>
@@ -642,12 +648,12 @@ async function openRouteDetail(id) {
         <div style="background:var(--gray-100);border-radius:10px;padding:14px">
           <div class="text-xs text-muted mb-4">DEPARTURE</div>
           <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy)">${String(r.from_city)}</div>
-          <div class="text-sm text-muted">${String(r.departure_date)} · ${String(r.departure_time)}</div>
+          <div class="text-sm text-muted">${fmtDate(r.departure_date)} · ${String(r.departure_time)}</div>
         </div>
         <div style="background:var(--gray-100);border-radius:10px;padding:14px">
           <div class="text-xs text-muted mb-4">ARRIVAL</div>
           <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy)">${String(r.to_city)}</div>
-          <div class="text-sm text-muted">${String(r.departure_date)} · ${String(r.arrival_time)}</div>
+          <div class="text-sm text-muted">${fmtDate(r.departure_date)} · ${String(r.arrival_time)}</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
@@ -686,7 +692,7 @@ async function startBooking(routeId) {
 }
 
 function buildSeatModal(route, taken) {
-  let html = `<div style="margin-bottom:16px"><div class="text-sm text-muted">${route.from_city} → ${route.to_city} · ${route.departure_date} · <strong style="color:var(--gold)">$${route.price_per_seat}</strong></div></div>`;
+  let html = `<div style="margin-bottom:16px"><div class="text-sm text-muted">${route.from_city} → ${route.to_city} · ${fmtDate(route.departure_date)} · <strong style="color:var(--gold)">$${route.price_per_seat}</strong></div></div>`;
   html += '<div class="seat-map">';
   const ROWS = ['3','4','5','6','7','8','9','10','11'];
   ROWS.forEach(row => {
@@ -762,7 +768,7 @@ function buildActiveTripsPage(bookings) {
   <div class="page-header"><div><div class="page-title">Active Trips</div><div class="page-sub">Live tracking and trip status</div></div></div>
   <div class="card mb-16" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <div><div class="section-title" style="margin-bottom:0">${b.route_number} — Live</div><div class="text-sm text-muted">${b.from_city} → ${b.to_city} · ${b.departure_date}</div></div>
+      <div><div class="section-title" style="margin-bottom:0">${b.route_number} — Live</div><div class="text-sm text-muted">${b.from_city} → ${b.to_city} · ${fmtDate(b.departure_date)}</div></div>
       <span class="badge badge-green">● Active</span>
     </div>
     <div class="map-container" id="live-map">
@@ -797,7 +803,7 @@ function buildActiveTripsPage(bookings) {
   <div class="card">
     <div class="section-title">Your Upcoming Trips</div>
     ${bookings.map(bk => `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)">
-      <div><div style="font-weight:500;color:var(--navy);font-size:.9rem">${bk.from_city} → ${bk.to_city}</div><div class="text-xs text-muted">${bk.departure_date} · Seat ${bk.seat_number}</div></div>
+      <div><div style="font-weight:500;color:var(--navy);font-size:.9rem">${bk.from_city} → ${bk.to_city}</div><div class="text-xs text-muted">${fmtDate(bk.departure_date)} · Seat ${bk.seat_number}</div></div>
       <span class="badge ${bk.checkin_status === 'checked' ? 'badge-green' : 'badge-gold'}">${bk.checkin_status}</span>
     </div>`).join('')}
   </div>`;
@@ -860,7 +866,7 @@ function buildTicketsPage(bookings, activeTab) {
 }
 
 function buildTicketCard(b) {
-  return `<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;display:grid;grid-template-columns:1fr 90px;cursor:pointer;transition:var(--transition)" onclick="openTicket('${b.id}','${b.route_number}','${b.from_city}','${b.to_city}','${b.departure_date}','${b.departure_time}','${b.seat_number}','${b.driver_name}')" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--gray-200)'">
+  return `<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;display:grid;grid-template-columns:1fr 90px;cursor:pointer;transition:var(--transition)" onclick="openTicket('${b.id}','${b.route_number}','${b.from_city}','${b.to_city}','${fmtDate(b.departure_date)}','${b.departure_time}','${b.seat_number}','${b.driver_name}')" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--gray-200)'">
     <div style="padding:18px 22px">
       <div style="display:flex;justify-content:space-between;margin-bottom:12px">
         <span class="route-num">${b.route_number}</span>
@@ -871,7 +877,7 @@ function buildTicketCard(b) {
         <div style="color:var(--gold);font-size:1.2rem;flex:1;text-align:center">→</div>
         <div style="text-align:right"><div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--navy)">${b.to_city}</div><div class="text-xs text-muted">${b.arrival_time}</div></div>
       </div>
-      <div style="display:flex;gap:14px;font-size:.78rem;color:var(--gray-400)"><span style="display:inline-flex;align-items:center;gap:4px">${ICON.calendar()} ${b.departure_date}</span><span style="display:inline-flex;align-items:center;gap:4px">${ICON.seat()} Seat ${b.seat_number}</span><span style="display:inline-flex;align-items:center;gap:4px">${ICON.driver()} ${b.driver_name}</span></div>
+      <div style="display:flex;gap:14px;font-size:.78rem;color:var(--gray-400)"><span style="display:inline-flex;align-items:center;gap:4px">${ICON.calendar()} ${fmtDate(b.departure_date)}</span><span style="display:inline-flex;align-items:center;gap:4px">${ICON.seat()} Seat ${b.seat_number}</span><span style="display:inline-flex;align-items:center;gap:4px">${ICON.driver()} ${b.driver_name}</span></div>
     </div>
     <div style="background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:8px">
       <div style="font-size:.6rem;color:rgba(255,255,255,.5);letter-spacing:.08em">SCAN</div>
@@ -1265,7 +1271,7 @@ function buildDriverDashboard(a) {
         <button class="btn btn-outline-gold btn-sm" onclick="dTab('routes')">View All</button>
       </div>
       ${a.upcoming_routes.length ? a.upcoming_routes.map(r => `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)">
-        <div><div style="font-weight:600;font-size:.9rem;color:var(--navy)">${String(r.from_city)} → ${String(r.to_city)}</div><div class="text-xs text-muted">${String(r.departure_date)} · ${String(r.departure_time)} · <span class="route-num">${String(r.route_number)}</span></div></div>
+        <div><div style="font-weight:600;font-size:.9rem;color:var(--navy)">${String(r.from_city)} → ${String(r.to_city)}</div><div class="text-xs text-muted">${fmtDate(r.departure_date)} · ${String(r.departure_time)} · <span class="route-num">${String(r.route_number)}</span></div></div>
         <button class="btn btn-outline-gold btn-sm" onclick="dTab('checkin')">Check-In</button>
       </div>`).join('') : '<div class="text-sm text-muted">No upcoming routes</div>'}
     </div>
@@ -1311,7 +1317,7 @@ function buildDriverRoutesPage(routes) {
           <span class="route-num">${String(r.route_number)}</span>
         </div>
         <div class="route-meta">
-          <span class="route-meta-item">${ICON.calendar()} ${String(r.departure_date)}</span>
+          <span class="route-meta-item">${ICON.calendar()} ${fmtDate(r.departure_date)}</span>
           <span class="route-meta-item">${ICON.clock()} ${String(r.departure_time)}</span>
           <span class="route-meta-item">${ICON.people()} ${String(r.booked_seats)}/${String(r.total_seats)} booked</span>
         </div>
@@ -1403,7 +1409,7 @@ function buildCreateStep() {
     <div class="section-title">Review & Post</div>
     <div style="background:var(--gray-100);border-radius:12px;padding:20px;margin-bottom:20px">
       <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--navy);margin-bottom:14px">Route Preview</div>
-      ${[['From',d.from_city],['To',d.to_city],['Date',d.departure_date],['Departure',d.departure_time],['Arrival',d.arrival_time],['Duration',d.duration],['Seats',`${d.total_seats} @ $${d.price_per_seat}/seat`]].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:.875rem"><span style="color:var(--gray-600)">${k}</span><strong style="color:var(--navy)">${v || '—'}</strong></div>`).join('')}
+      ${[['From',d.from_city],['To',d.to_city],['Date',fmtDate(d.departure_date)],['Departure',d.departure_time],['Arrival',d.arrival_time],['Duration',d.duration],['Seats',`${d.total_seats} @ $${d.price_per_seat}/seat`]].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:.875rem"><span style="color:var(--gray-600)">${k}</span><strong style="color:var(--navy)">${v || '—'}</strong></div>`).join('')}
     </div>
     <div style="display:flex;gap:10px">
       <button class="btn btn-sm" style="background:var(--gray-100);color:var(--navy)" onclick="createBack()">← Edit</button>
@@ -1511,7 +1517,7 @@ function buildCheckinPage(route, manifest) {
   const checked = manifest.filter(p => p.checkin_status === 'checked').length;
   return `
   <div class="page-header">
-    <div><div class="page-title">Check-In — ${route.route_number}</div><div class="page-sub">${route.from_city} → ${route.to_city} · ${route.departure_date}</div></div>
+    <div><div class="page-title">Check-In — ${route.route_number}</div><div class="page-sub">${route.from_city} → ${route.to_city} · ${fmtDate(route.departure_date)}</div></div>
     <span class="badge badge-green" id="ci-counter">${checked}/${manifest.length} Checked In</span>
   </div>
   <div style="background:var(--white);border:2px dashed var(--gold);border-radius:14px;padding:22px;text-align:center;cursor:pointer;margin-bottom:20px;transition:var(--transition)" onclick="simulateScan()" onmouseover="this.style.background='rgba(201,150,42,.04)'" onmouseout="this.style.background='var(--white)'">
