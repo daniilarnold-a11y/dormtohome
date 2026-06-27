@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 function generateToken() {
   return 'tk_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
 }
-module.exports.generateToken = generateToken;
+
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
@@ -268,4 +268,4 @@ async function initDatabase() {
   }
 }
 
-module.exports = { initDatabase, all, get, run, pool };
+module.exports = { initDatabase, all, get, run, pool, generateToken };
