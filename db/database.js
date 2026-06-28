@@ -257,7 +257,6 @@ async function dropAllTables() {
 // ─── INIT ────────────────────────────────────────────────
 async function initDatabase() {
   try {
-    await dropAllTables();
     await createSchema();
     await seedDatabase();
     console.log('[DB] Ready');

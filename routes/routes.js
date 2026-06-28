@@ -113,6 +113,9 @@ router.put('/:id', authMiddleware, requireRole('driver'), async (req, res) => {
 // PATCH /api/routes/:id/stops/:stopId
 router.patch('/:id/stops/:stopId', authMiddleware, requireRole('driver'), async (req, res) => {
   try {
+    const route = await get('SELECT driver_id FROM routes WHERE id=$1', [req.params.id]);
+    if (!route) return res.status(404).json({ error: 'Route not found' });
+    if (route.driver_id !== req.user.id) return res.status(403).json({ error: 'Not your route' });
     await run('UPDATE route_stops SET status=$1 WHERE id=$2 AND route_id=$3', [req.body.status, req.params.stopId, req.params.id]);
     res.json(await all('SELECT * FROM route_stops WHERE route_id=$1 ORDER BY order_index', [req.params.id]));
   } catch (e) { res.status(500).json({ error: e.message }); }

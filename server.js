@@ -98,10 +98,10 @@ io.on('connection', (socket) => {
     } catch (e) { console.error('[socket] send_message:', e.message); }
   });
 
-  socket.on('driver_location_update', ({ latitude, longitude, routeId }) => {
+  socket.on('driver_location_update', async ({ latitude, longitude, routeId }) => {
     if (user.role !== 'driver') return;
     try {
-      run(`INSERT INTO driver_location (driver_id,latitude,longitude,updated_at) VALUES ($1,$2,$3,CURRENT_TIMESTAMP)
+      await run(`INSERT INTO driver_location (driver_id,latitude,longitude,updated_at) VALUES ($1,$2,$3,CURRENT_TIMESTAMP)
           ON CONFLICT (driver_id) DO UPDATE SET latitude=$2, longitude=$3, updated_at=CURRENT_TIMESTAMP`, [user.id, latitude, longitude]);
       if (routeId) io.to(`route:${routeId}`).emit('bus_location', { driverId: user.id, latitude, longitude });
     } catch (e) { console.error('[socket] location:', e.message); }
@@ -110,7 +110,6 @@ io.on('connection', (socket) => {
   socket.on('checkin_passenger', async ({ bookingId, routeId }) => {
     if (user.role !== 'driver') return;
     try {
-      await run('UPDATE bookings SET checkin_status=$1 WHERE id=$2', ['checked', bookingId]);
       const booking = await get(`SELECT b.*, u.first_name, u.last_name, u.id as uid FROM bookings b JOIN users u ON b.passenger_id=u.id WHERE b.id=$1`, [bookingId]);
       if (!booking) return;
       await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`, [uuidv4(), booking.uid, 'Checked In', 'You have been checked in. Have a great ride!', 'success']);

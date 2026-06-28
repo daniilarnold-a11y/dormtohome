@@ -55,9 +55,12 @@ router.post('/bookings', authMiddleware, requireRole('passenger'), async (req, r
 
 router.patch('/bookings/:id/checkin', authMiddleware, requireRole('driver'), async (req, res) => {
   try {
-    await run('UPDATE bookings SET checkin_status=$1 WHERE id=$2', ['checked', req.params.id]);
-    const booking = await get(`SELECT b.*, u.first_name, u.last_name, u.id as uid
+    const booking = await get(`SELECT b.id, b.route_id, b.passenger_id, u.first_name, u.last_name, u.id as uid
       FROM bookings b JOIN users u ON b.passenger_id=u.id WHERE b.id=$1`, [req.params.id]);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    const route = await get('SELECT driver_id FROM routes WHERE id=$1', [booking.route_id]);
+    if (!route || route.driver_id !== req.user.id) return res.status(403).json({ error: 'Not your route' });
+    await run('UPDATE bookings SET checkin_status=$1 WHERE id=$2', ['checked', req.params.id]);
     await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
       [uuidv4(), booking.uid, 'Checked In', `${booking.first_name} ${booking.last_name} has boarded.`, 'success']);
     res.json({ success: true, booking });
@@ -88,7 +91,7 @@ router.post('/bookings/checkin', authMiddleware, requireRole('driver'), async (r
     const booking = await get(`
       SELECT b.id, b.checked_in, b.seat_number, b.route_id,
              u.first_name, u.last_name,
-             r.from_city, r.to_city
+             r.from_city, r.to_city, r.driver_id
       FROM bookings b
       JOIN users u ON b.passenger_id=u.id
       JOIN routes r ON b.route_id=r.id
@@ -99,6 +102,8 @@ router.post('/bookings/checkin', authMiddleware, requireRole('driver'), async (r
       if (existing) return res.status(409).json({ error: 'Already checked in', booking: existing });
       return res.status(404).json({ error: 'Invalid or expired ticket' });
     }
+
+    if (booking.driver_id !== req.user.id) return res.status(403).json({ error: 'Not your route' });
 
     await run(`UPDATE bookings SET checked_in=1, checked_in_at=CURRENT_TIMESTAMP, checkin_status='checked' WHERE ticket_token=$1`, [token]);
 
@@ -276,6 +281,10 @@ router.get('/location/:driverId', async (req, res) => {
 router.post('/driver-notification', authMiddleware, requireRole('driver'), async (req, res) => {
   try {
     const { route_id, message } = req.body;
+    if (!route_id || !message) return res.status(400).json({ error: 'Missing fields' });
+    const route = await get('SELECT driver_id FROM routes WHERE id=$1', [route_id]);
+    if (!route) return res.status(404).json({ error: 'Route not found' });
+    if (route.driver_id !== req.user.id) return res.status(403).json({ error: 'Not your route' });
     const passengers = await all(`SELECT DISTINCT b.passenger_id FROM bookings b WHERE b.route_id=$1`, [route_id]);
     for (const p of passengers) {
       await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
