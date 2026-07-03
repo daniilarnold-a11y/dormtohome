@@ -34,8 +34,11 @@ router.get('/', async (req, res) => {
     if (route_number) { sql += ` AND route_number LIKE $${i++}`;        params.push(`%${route_number.toUpperCase()}%`); }
     sql += ' ORDER BY departure_date, departure_time';
     let routes = await all(sql, params);
+    console.log(`[ROUTES] GET /api/routes — query: "${sql}" params: ${JSON.stringify(params)} — found ${routes.length} row(s)`);
+    if (routes.length > 0) console.log(`[ROUTES] sample:`, JSON.stringify(routes[0], null, 2));
     routes = await Promise.all(routes.map(enrichRoute));
     if (min_seats) routes = routes.filter(r => r.available_seats >= parseInt(min_seats));
+    console.log(`[ROUTES] returning ${routes.length} route(s)`);
     res.json(routes);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
