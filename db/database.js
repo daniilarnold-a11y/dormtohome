@@ -156,8 +156,22 @@ async function createSchema() {
 
 // ─── SEED ────────────────────────────────────────────────
 async function seedDatabase() {
-  const { cnt } = await get('SELECT COUNT(*) as cnt FROM routes');
-  if (cnt > 0) { console.log('[DB] Routes exist, skipping seed'); return; }
+  const future = await get("SELECT MAX(departure_date) as max_date FROM routes");
+  if (future && future.max_date && future.max_date >= new Date().toISOString().slice(0, 10)) {
+    console.log('[DB] Future-dated routes exist, skipping seed');
+    return;
+  }
+  if (future && future.max_date) {
+    console.log('[DB] Routes exist but all past-dated, clearing and re-seeding...');
+    await run('DELETE FROM route_request_supports');
+    await run('DELETE FROM route_requests');
+    await run('DELETE FROM messages');
+    await run('DELETE FROM notifications');
+    await run('DELETE FROM driver_location');
+    await run('DELETE FROM bookings');
+    await run('DELETE FROM route_stops');
+    await run('DELETE FROM routes');
+  }
 
   console.log('[DB] Seeding demo data...');
   const pw = await bcrypt.hash('password123', 10);
@@ -170,25 +184,25 @@ async function seedDatabase() {
   ];
   for (const u of users) {
     await run(
-      `INSERT INTO users (id,first_name,last_name,email,phone,password,"role") VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      `INSERT INTO users (id,first_name,last_name,email,phone,password,"role") VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`,
       [u.id, u.first, u.last, u.email, '5550000000', pw, u.role]
     );
   }
 
-  await run(`INSERT INTO guardians (id,passenger_id,name,email,phone,checkpoint_notifs) VALUES ($1,$2,$3,$4,$5,$6)`,
+  await run(`INSERT INTO guardians (id,passenger_id,name,email,phone,checkpoint_notifs) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING`,
     [uuidv4(), 'u-passenger-1', 'Linda Johnson', 'linda@gmail.com', '5551234567', 1]);
 
   const routes = [
     { id:'r-001',num:'DTH-201',driver:'u-driver-1',from:'College Station',fz:'77840',to:'Houston',        tz:'77001',date:'2026-08-15',dep:'08:00 AM',arr:'11:30 AM',dur:'3h 30m',price:28 },
-    { id:'r-002',num:'DTH-202',driver:'u-driver-2',from:'College Station',fz:'77840',to:'Austin',         tz:'78701',date:'2026-08-16',dep:'09:00 AM',arr:'12:30 PM',dur:'3h 30m',price:32 },
-    { id:'r-003',num:'DTH-203',driver:'u-driver-1',from:'College Station',fz:'77840',to:'Dallas',         tz:'75201',date:'2026-08-17',dep:'07:00 AM',arr:'11:00 AM',dur:'4h 0m', price:35 },
-    { id:'r-004',num:'DTH-204',driver:'u-driver-2',from:'Houston',        fz:'77001',to:'College Station',tz:'77840',date:'2026-08-18',dep:'02:00 PM',arr:'05:30 PM',dur:'3h 30m',price:28 },
-    { id:'r-005',num:'DTH-205',driver:'u-driver-1',from:'College Station',fz:'77840',to:'San Antonio',   tz:'78201',date:'2026-08-19',dep:'10:00 AM',arr:'03:00 PM',dur:'5h 0m', price:42 },
-    { id:'r-006',num:'DTH-206',driver:'u-driver-1',from:'Austin',         fz:'78701',to:'Dallas',         tz:'75201',date:'2026-08-20',dep:'06:30 AM',arr:'10:00 AM',dur:'3h 30m',price:38 },
-    { id:'r-007',num:'DTH-207',driver:'u-driver-2',from:'Houston',        fz:'77001',to:'Austin',         tz:'78701',date:'2026-08-22',dep:'07:00 AM',arr:'10:30 AM',dur:'3h 30m',price:34 },
-    { id:'r-008',num:'DTH-208',driver:'u-driver-1',from:'Dallas',         fz:'75201',to:'College Station',tz:'77840',date:'2026-08-25',dep:'01:00 PM',arr:'04:30 PM',dur:'3h 30m',price:35 },
-    { id:'r-009',num:'DTH-209',driver:'u-driver-2',from:'San Antonio',    fz:'78201',to:'Houston',        tz:'77001',date:'2026-08-28',dep:'09:00 AM',arr:'01:00 PM',dur:'4h 0m', price:30 },
-    { id:'r-010',num:'DTH-210',driver:'u-driver-1',from:'College Station',fz:'77840',to:'Austin',         tz:'78701',date:'2026-09-01',dep:'08:00 AM',arr:'11:00 AM',dur:'3h 0m', price:30 },
+    { id:'r-002',num:'DTH-202',driver:'u-driver-2',from:'College Station',fz:'77840',to:'Austin',         tz:'78701',date:'2026-09-01',dep:'09:00 AM',arr:'12:30 PM',dur:'3h 30m',price:32 },
+    { id:'r-003',num:'DTH-203',driver:'u-driver-1',from:'College Station',fz:'77840',to:'Dallas',         tz:'75201',date:'2026-09-05',dep:'07:00 AM',arr:'11:00 AM',dur:'4h 0m', price:35 },
+    { id:'r-004',num:'DTH-204',driver:'u-driver-2',from:'Houston',        fz:'77001',to:'College Station',tz:'77840',date:'2026-09-10',dep:'02:00 PM',arr:'05:30 PM',dur:'3h 30m',price:28 },
+    { id:'r-005',num:'DTH-205',driver:'u-driver-1',from:'College Station',fz:'77840',to:'San Antonio',   tz:'78201',date:'2026-09-15',dep:'10:00 AM',arr:'03:00 PM',dur:'5h 0m', price:42 },
+    { id:'r-006',num:'DTH-206',driver:'u-driver-1',from:'Austin',         fz:'78701',to:'Dallas',         tz:'75201',date:'2026-09-20',dep:'06:30 AM',arr:'10:00 AM',dur:'3h 30m',price:38 },
+    { id:'r-007',num:'DTH-207',driver:'u-driver-2',from:'Houston',        fz:'77001',to:'Austin',         tz:'78701',date:'2026-09-25',dep:'07:00 AM',arr:'10:30 AM',dur:'3h 30m',price:34 },
+    { id:'r-008',num:'DTH-208',driver:'u-driver-1',from:'Dallas',         fz:'75201',to:'College Station',tz:'77840',date:'2026-10-01',dep:'01:00 PM',arr:'04:30 PM',dur:'3h 30m',price:35 },
+    { id:'r-009',num:'DTH-209',driver:'u-driver-2',from:'San Antonio',    fz:'78201',to:'Houston',        tz:'77001',date:'2026-10-10',dep:'09:00 AM',arr:'01:00 PM',dur:'4h 0m', price:30 },
+    { id:'r-010',num:'DTH-210',driver:'u-driver-1',from:'College Station',fz:'77840',to:'Austin',         tz:'78701',date:'2026-10-20',dep:'08:00 AM',arr:'11:00 AM',dur:'3h 0m', price:30 },
   ];
   for (const r of routes) {
     await run(
@@ -221,11 +235,11 @@ async function seedDatabase() {
 
   for (const q of [
     { from:'College Station',to:'Houston',         date:'Aug 15',time:'8:00 AM',count:14 },
-    { from:'Houston',        to:'College Station', date:'Aug 18',time:'3:00 PM',count:9  },
-    { from:'College Station',to:'Dallas',          date:'Aug 17',time:'7:00 AM',count:22 },
-    { from:'College Station',to:'Austin',          date:'Sep 1', time:'9:00 AM',count:7  },
-    { from:'Austin',         to:'Dallas',          date:'Aug 20',time:'6:30 AM',count:5  },
-    { from:'San Antonio',    to:'Houston',         date:'Aug 28',time:'9:00 AM',count:11 },
+    { from:'Houston',        to:'College Station', date:'Sep 10',time:'3:00 PM',count:9  },
+    { from:'College Station',to:'Dallas',          date:'Sep 5', time:'7:00 AM',count:22 },
+    { from:'College Station',to:'Austin',          date:'Oct 20',time:'9:00 AM',count:7  },
+    { from:'Austin',         to:'Dallas',          date:'Sep 20',time:'6:30 AM',count:5  },
+    { from:'San Antonio',    to:'Houston',         date:'Oct 10',time:'9:00 AM',count:11 },
   ]) {
     await run(`INSERT INTO route_requests (id,requester_id,from_city,to_city,requested_date,requested_time,supporter_count,status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
       [uuidv4(),'u-passenger-2',q.from,q.to,q.date,q.time,q.count,'open']);
@@ -247,7 +261,7 @@ async function seedDatabase() {
   await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
     [uuidv4(),'u-passenger-1','Check-in Confirmed','You have been successfully checked in for DTH-201.','success']);
   await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
-    [uuidv4(),'u-passenger-1','DTH-206 reminder','Your Austin to Dallas trip departs tomorrow at 6:30 AM.','info']);
+    [uuidv4(),'u-passenger-1','DTH-206 reminder','Your Austin to Dallas trip departs Sep 20 at 6:30 AM.','info']);
 
   await run(`INSERT INTO driver_location VALUES ($1,$2,$3,NOW())`,
     ['u-driver-1', 30.6280, -96.3344]);
