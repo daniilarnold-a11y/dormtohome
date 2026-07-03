@@ -314,7 +314,7 @@ function buildRoutesPage(routes, reqs) {
       <div class="filter-chip" onclick="openFilterPanel('seats')">${ICON.seat()} Min Seats</div>
       <input style="background:var(--gray-100);border:1px solid var(--gray-200);border-radius:8px;padding:6px 12px;font-size:.8rem;color:var(--navy-dark);outline:none;width:200px" placeholder="Search route # (DTH-201)" oninput="filterRouteNum(this.value)">
     </div>
-    <div class="routes-grid" id="routes-list">${routes.map(buildRouteCard).join('') || emptyState('No routes found')}</div>
+    <div class="routes-grid" id="routes-list">${routes.map(r => { try { return buildRouteCard(r); } catch (e) { console.error('buildRouteCard error:', e, r); return ''; } }).join('') || emptyState('No routes found')}</div>
   </div>
   <div class="tab-pane" id="tab-requested">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
@@ -540,11 +540,11 @@ async function applyFilterPanel() {
     }
 
     const list = document.getElementById('routes-list');
-    if (list) list.innerHTML = routes.map(buildRouteCard).join('') || emptyState('No routes match your filter');
+    if (list) list.innerHTML = (routes.map(r => { try { return buildRouteCard(r); } catch (e) { console.error('buildRouteCard error:', e, r); return ''; } }).join('') || emptyState('No routes match your filter'));
     toast('Filter applied', 'success');
 
     updateClearFilterBtn();
-  } catch (e) { toast(e.message, 'error'); }
+  } catch (e) { console.error('applyFilterPanel error:', e); toast(e.message || 'Filter error', 'error'); }
 }
 
 function updateClearFilterBtn() {
@@ -574,9 +574,9 @@ async function clearAllFilters() {
   try {
     const routes = await api('GET', '/routes', null, false);
     const list = document.getElementById('routes-list');
-    if (list) list.innerHTML = routes.map(buildRouteCard).join('') || emptyState('No routes found');
+    if (list) list.innerHTML = (routes.map(r => { try { return buildRouteCard(r); } catch (e) { console.error('buildRouteCard error:', e, r); return ''; } }).join('') || emptyState('No routes found'));
     toast('Filters cleared', 'success');
-  } catch (e) { toast(e.message, 'error'); }
+  } catch (e) { console.error('clearFilters error:', e); toast(e.message || 'Clear error', 'error'); }
 }
 
 function applyRequestFilters() {
@@ -1035,8 +1035,8 @@ async function sendMsg() {
     try {
       const msg = await api('POST', `/messages/${S.chatRoute}`, { content: text });
       appendChatMsg(msg);
-    } catch (e) { toast(e.message, 'error'); }
-  }
+  } catch (e) { console.error('renderPassengerRoutes error:', e); toast(e.message || 'Failed to load routes', 'error'); }
+}
 }
 
 async function switchChatRoom(routeId, num, from, to, el) {
@@ -1983,12 +1983,14 @@ function selectCity(inputId, ddId, val) {
   if (dd) dd.classList.remove('open');
 }
 
+function stripState(v) { return v.replace(/, ?[A-Za-z]{2}$/, '').trim(); }
+
 function landingSearch() {
   const from = document.getElementById('land-from').value;
   const to = document.getElementById('land-to').value;
   const date = document.getElementById('land-date').value;
-  sessionStorage.setItem('landFrom', from);
-  sessionStorage.setItem('landTo', to);
+  sessionStorage.setItem('landFrom', stripState(from));
+  sessionStorage.setItem('landTo', stripState(to));
   sessionStorage.setItem('landDate', date);
   if (!S.token) { showScreen('screen-login'); toast('Sign in to book rides', 'info'); return; }
   pTab('routes');
