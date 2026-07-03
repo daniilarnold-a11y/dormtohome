@@ -849,8 +849,8 @@ async function renderTickets() {
     document.getElementById('p-content').innerHTML = buildTicketsPage(bookings, 'active');
     bookings.forEach(b => {
       const canvas = document.getElementById(`qr-mini-${b.id}`);
-      if (canvas && typeof QRCode !== 'undefined') {
-        QRCode.toCanvas(canvas, `dormtohome:ticket:${b.id}`, { width: 60, margin: 1, color: { dark: '#0B1D3A', light: '#FFFFFF' } });
+      if (canvas && typeof qrcodelib !== 'undefined') {
+        qrcodelib.toCanvas(canvas, `dormtohome:ticket:${b.id}`, { width: 60, margin: 1, color: { dark: '#0B1D3A', light: '#FFFFFF' } });
       }
     });
   } catch (e) { toast(e.message, 'error'); }
@@ -913,8 +913,8 @@ function showTicketTab(tab) {
   });
   showing.forEach(b => {
     const canvas = document.getElementById(`qr-mini-${b.id}`);
-    if (canvas && typeof QRCode !== 'undefined') {
-      QRCode.toCanvas(canvas, `dormtohome:ticket:${b.id}`, { width: 60, margin: 1, color: { dark: '#0B1D3A', light: '#FFFFFF' } });
+    if (canvas && typeof qrcodelib !== 'undefined') {
+      qrcodelib.toCanvas(canvas, `dormtohome:ticket:${b.id}`, { width: 60, margin: 1, color: { dark: '#0B1D3A', light: '#FFFFFF' } });
     }
   });
 }
@@ -2041,7 +2041,7 @@ async function renderTicketQR(bookingId) {
     qrDiv.id = 'qr-code-container';
     qrContainer.appendChild(qrDiv);
 
-    if (typeof QRCode !== 'undefined' && data.ticket_token) {
+    if (typeof qrcodelib !== 'undefined' && data.ticket_token) {
       const qrCanvas = document.createElement('canvas');
       qrCanvas.width = 200;
       qrCanvas.height = 200;
@@ -2050,7 +2050,7 @@ async function renderTicketQR(bookingId) {
       qrCanvas.style.borderRadius = '8px';
       qrDiv.appendChild(qrCanvas);
       try {
-        await QRCode.toCanvas(qrCanvas, data.ticket_token, {
+        await qrcodelib.toCanvas(qrCanvas, data.ticket_token, {
           width: 200,
           margin: 1,
           color: { dark: '#1a1a2e', light: '#ffffff' }
