@@ -848,9 +848,9 @@ async function renderTickets() {
     S.allBookings = bookings;
     document.getElementById('p-content').innerHTML = buildTicketsPage(bookings, 'active');
     bookings.forEach(b => {
-      const canvas = document.getElementById(`qr-mini-${b.id}`);
-      if (canvas && typeof qrcodelib !== 'undefined') {
-        qrcodelib.toCanvas(canvas, `dormtohome:ticket:${b.id}`, { width: 60, margin: 1, color: { dark: '#0B1D3A', light: '#FFFFFF' } });
+      const el = document.getElementById(`qr-mini-${b.id}`);
+      if (el && typeof QRCode !== 'undefined') {
+        new QRCode(el, { text:`dormtohome:ticket:${b.id}`, width:60, height:60, colorDark:'#0B1D3A', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.H });
       }
     });
   } catch (e) { toast(e.message, 'error'); }
@@ -912,15 +912,15 @@ function showTicketTab(tab) {
     return (tab === 'active') ? d >= today : d < today;
   });
   showing.forEach(b => {
-    const canvas = document.getElementById(`qr-mini-${b.id}`);
-    if (canvas && typeof qrcodelib !== 'undefined') {
-      qrcodelib.toCanvas(canvas, `dormtohome:ticket:${b.id}`, { width: 60, margin: 1, color: { dark: '#0B1D3A', light: '#FFFFFF' } });
+    const el = document.getElementById(`qr-mini-${b.id}`);
+    if (el && typeof QRCode !== 'undefined') {
+      new QRCode(el, { text:`dormtohome:ticket:${b.id}`, width:60, height:60, colorDark:'#0B1D3A', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.H });
     }
   });
 }
 
 function miniQR(bookingId) {
-  return `<canvas id="qr-mini-${bookingId || 'x'}" width="60" height="60" style="border-radius:5px"></canvas>`;
+  return `<div id="qr-mini-${bookingId || 'x'}" style="width:60px;height:60px;border-radius:5px;overflow:hidden"></div>`;
 }
 
 function openTicket(id, num, from, to, date, time, seat, driver) {
@@ -2041,20 +2041,11 @@ async function renderTicketQR(bookingId) {
     qrDiv.id = 'qr-code-container';
     qrContainer.appendChild(qrDiv);
 
-    if (typeof qrcodelib !== 'undefined' && data.ticket_token) {
-      const qrCanvas = document.createElement('canvas');
-      qrCanvas.width = 200;
-      qrCanvas.height = 200;
-      qrCanvas.style.width = '200px';
-      qrCanvas.style.height = '200px';
-      qrCanvas.style.borderRadius = '8px';
-      qrDiv.appendChild(qrCanvas);
+    if (typeof QRCode !== 'undefined' && data.ticket_token) {
+      const qrInner = document.createElement('div');
+      qrDiv.appendChild(qrInner);
       try {
-        await qrcodelib.toCanvas(qrCanvas, data.ticket_token, {
-          width: 200,
-          margin: 1,
-          color: { dark: '#1a1a2e', light: '#ffffff' }
-        });
+        new QRCode(qrInner, { text:data.ticket_token, width:200, height:200, colorDark:'#1a1a2e', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
       } catch (e) {
         console.error('QR generation error:', e);
       }
