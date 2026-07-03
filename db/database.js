@@ -156,13 +156,13 @@ async function createSchema() {
 
 // ─── SEED ────────────────────────────────────────────────
 async function seedDatabase() {
-  const future = await get("SELECT MAX(departure_date) as max_date FROM routes");
+  const future = await get("SELECT MAX(departure_date) as max_date FROM routes WHERE status != 'cancelled'");
   if (future && future.max_date && future.max_date >= new Date().toISOString().slice(0, 10)) {
-    console.log('[DB] Future-dated routes exist, skipping seed');
+    console.log(`[DB] Future-dated non-cancelled routes exist (latest: ${future.max_date}), skipping seed`);
     return;
   }
   if (future && future.max_date) {
-    console.log('[DB] Routes exist but all past-dated, clearing and re-seeding...');
+    console.log(`[DB] Routes exist but all past-dated (latest: ${future.max_date}), clearing and re-seeding...`);
     await run('DELETE FROM route_request_supports');
     await run('DELETE FROM route_requests');
     await run('DELETE FROM messages');
