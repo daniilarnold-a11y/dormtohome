@@ -545,8 +545,6 @@ test.describe.serial('DormToHome E2E Tests', () => {
   // ─── TEST 11: LANDING PAGE REVISIT ────────────────────
 
   test('Test 11: Landing page is accessible after sign out', async () => {
-    // Should be on login screen now
-    await page.locator('#screen-login .auth-link a', { hasText: 'Home' }).click();
     await expect(page.locator('#screen-landing')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('#screen-landing .hero-title')).toBeVisible({ timeout: 3000 });
   });
