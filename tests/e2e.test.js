@@ -468,7 +468,7 @@ test.describe.serial('DormToHome E2E Tests', () => {
     // My Routes
     await driver.locator('[data-tab="routes"]').click();
     await waitForSpinner();
-    await expect(driver.getByText('My Routes')).toBeVisible({ timeout: 5000 });
+    await expect(driver.locator('.page-title', { hasText: 'My Routes' })).toBeVisible({ timeout: 5000 });
     const hasDriverRoutes = await driver.locator('.route-card').first().isVisible().catch(() => false);
     if (hasDriverRoutes) {
       await expect(driver.locator('.route-card').first()).toBeVisible({ timeout: 5000 });

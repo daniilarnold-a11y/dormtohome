@@ -14,15 +14,15 @@
 ```
 Error: expect(locator).toBeVisible() failed
 
-Locator: locator('#screen-driver').getByText('Location Sharing')
+Locator: locator('#screen-driver').getByText('My Routes')
 Expected: visible
-Error: strict mode violation: locator('#screen-driver').getByText('Location Sharing') resolved to 2 elements:
-    1) <div class="section-title">Location Sharing</div> aka getByText('Location Sharing', { exact: true })
-    2) <div class="text-sm">…</div> aka getByText('Location sharing is active')
+Error: strict mode violation: locator('#screen-driver').getByText('My Routes') resolved to 2 elements:
+    1) <div data-tab="routes" class="nav-item active" onclick="dTab('routes')">My Routes</div> aka getByRole('navigation').getByText('My Routes')
+    2) <div class="page-title">My Routes</div> aka locator('#d-content').getByText('My Routes')
 
 Call log:
   - Expect "toBeVisible" with timeout 5000ms
-  - waiting for locator('#screen-driver').getByText('Location Sharing')
+  - waiting for locator('#screen-driver').getByText('My Routes')
 
 ```
 
@@ -58,93 +58,157 @@ Call log:
     - generic [ref=e35]:
       - generic [ref=e36]:
         - generic [ref=e37]:
-          - generic [ref=e38]: Driver Dashboard
-          - generic [ref=e39]: Marcus Davis
-        - generic [ref=e40]:
-          - button "Sign Out" [ref=e41] [cursor=pointer]
-          - button "Send Update" [ref=e42] [cursor=pointer]:
-            - img [ref=e43]
-            - text: Send Update
-          - button "+ New Route" [ref=e46] [cursor=pointer]
-      - generic [ref=e47]:
-        - generic [ref=e48]:
-          - generic [ref=e49]: "6"
-          - generic [ref=e50]: My Routes
-          - generic [ref=e51]: ↑ +2
-        - generic [ref=e61]:
-          - generic [ref=e62]: "4"
-          - generic [ref=e63]: Total Passengers
-          - generic [ref=e64]: ↑ +18
-        - generic [ref=e74]:
-          - generic [ref=e75]: $139
-          - generic [ref=e76]: Revenue (Est.)
-          - generic [ref=e77]: ↑ +$340
-        - generic [ref=e87]:
-          - generic [ref=e88]: "4.92"
-          - generic [ref=e89]: Avg. Rating
-          - generic [ref=e90]: ↑ +0.1
-      - generic [ref=e100]:
-        - generic [ref=e101]:
-          - generic [ref=e102]:
-            - generic [ref=e103]: Upcoming Trips
-            - button "View All" [ref=e104] [cursor=pointer]
-          - generic [ref=e105]:
-            - generic [ref=e106]:
-              - generic [ref=e107]: College Station → Houston
-              - generic [ref=e108]:
-                - text: August 15, 2026 · 08:00 AM ·
-                - generic [ref=e109]: DTH-201
-            - button "Check-In" [ref=e110] [cursor=pointer]
-          - generic [ref=e111]:
-            - generic [ref=e112]:
-              - generic [ref=e113]: College Station → Dallas
-              - generic [ref=e114]:
-                - text: September 5, 2026 · 07:00 AM ·
-                - generic [ref=e115]: DTH-203
-            - button "Check-In" [ref=e116] [cursor=pointer]
-          - generic [ref=e117]:
-            - generic [ref=e118]:
-              - generic [ref=e119]: College Station → San Antonio
-              - generic [ref=e120]:
-                - text: September 15, 2026 · 10:00 AM ·
-                - generic [ref=e121]: DTH-205
-            - button "Check-In" [ref=e122] [cursor=pointer]
-          - generic [ref=e123]:
-            - generic [ref=e124]:
-              - generic [ref=e125]: Austin → Dallas
-              - generic [ref=e126]:
-                - text: September 20, 2026 · 06:30 AM ·
-                - generic [ref=e127]: DTH-206
-            - button "Check-In" [ref=e128] [cursor=pointer]
-          - generic [ref=e129]:
-            - generic [ref=e130]:
-              - generic [ref=e131]: Dallas → College Station
-              - generic [ref=e132]:
-                - text: October 1, 2026 · 01:00 PM ·
-                - generic [ref=e133]: DTH-208
-            - button "Check-In" [ref=e134] [cursor=pointer]
-        - generic [ref=e135]:
-          - generic [ref=e136]: Location Sharing
-          - generic [ref=e139]:
-            - text: Location sharing is
-            - strong [ref=e140]: active
-          - generic [ref=e142]: Your location updates every 10 seconds while on an active trip. Passengers and guardians can see your live position on the map.
-          - generic [ref=e143]: Quick Actions
-          - generic [ref=e144]:
-            - button "Open Check-In" [ref=e145] [cursor=pointer]
-            - button "View Requests" [ref=e146] [cursor=pointer]
-            - button "Create Route" [ref=e147] [cursor=pointer]
-            - button "Send Update" [ref=e148] [cursor=pointer]
+          - generic [ref=e38]: My Routes
+          - generic [ref=e39]: All your posted routes
+        - button "+ New Route" [ref=e40] [cursor=pointer]
+      - generic [ref=e41]:
+        - generic [ref=e42] [cursor=pointer]: Active
+        - generic [ref=e43] [cursor=pointer]: Completed
+        - generic [ref=e44] [cursor=pointer]: Draft
+      - generic [ref=e45]:
+        - generic [ref=e46] [cursor=pointer]:
+          - generic [ref=e47]:
+            - generic [ref=e48]:
+              - generic [ref=e49]: College Station
+              - generic [ref=e50]: →
+              - generic [ref=e51]: Austin
+              - generic [ref=e52]: DTH-210
+            - generic [ref=e53]:
+              - generic [ref=e54]:
+                - img [ref=e55]
+                - text: October 20, 2026
+              - generic [ref=e57]:
+                - img [ref=e58]
+                - text: 08:00 AM
+              - generic [ref=e61]:
+                - img [ref=e62]
+                - text: 0/44 booked
+          - generic [ref=e68]:
+            - generic [ref=e69]: $0
+            - generic [ref=e70]: est. revenue
+            - generic [ref=e71]:
+              - button "Check-In" [ref=e72]
+              - button "Notify" [ref=e73]
+        - generic [ref=e74] [cursor=pointer]:
+          - generic [ref=e75]:
+            - generic [ref=e76]:
+              - generic [ref=e77]: Dallas
+              - generic [ref=e78]: →
+              - generic [ref=e79]: College Station
+              - generic [ref=e80]: DTH-208
+            - generic [ref=e81]:
+              - generic [ref=e82]:
+                - img [ref=e83]
+                - text: October 1, 2026
+              - generic [ref=e85]:
+                - img [ref=e86]
+                - text: 01:00 PM
+              - generic [ref=e89]:
+                - img [ref=e90]
+                - text: 0/44 booked
+          - generic [ref=e96]:
+            - generic [ref=e97]: $0
+            - generic [ref=e98]: est. revenue
+            - generic [ref=e99]:
+              - button "Check-In" [ref=e100]
+              - button "Notify" [ref=e101]
+        - generic [ref=e102] [cursor=pointer]:
+          - generic [ref=e103]:
+            - generic [ref=e104]:
+              - generic [ref=e105]: Austin
+              - generic [ref=e106]: →
+              - generic [ref=e107]: Dallas
+              - generic [ref=e108]: DTH-206
+            - generic [ref=e109]:
+              - generic [ref=e110]:
+                - img [ref=e111]
+                - text: September 20, 2026
+              - generic [ref=e113]:
+                - img [ref=e114]
+                - text: 06:30 AM
+              - generic [ref=e117]:
+                - img [ref=e118]
+                - text: 2/44 booked
+          - generic [ref=e125]:
+            - generic [ref=e126]: $76
+            - generic [ref=e127]: est. revenue
+            - generic [ref=e128]:
+              - button "Check-In" [ref=e129]
+              - button "Notify" [ref=e130]
+        - generic [ref=e131] [cursor=pointer]:
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - generic [ref=e134]: College Station
+              - generic [ref=e135]: →
+              - generic [ref=e136]: San Antonio
+              - generic [ref=e137]: DTH-205
+            - generic [ref=e138]:
+              - generic [ref=e139]:
+                - img [ref=e140]
+                - text: September 15, 2026
+              - generic [ref=e142]:
+                - img [ref=e143]
+                - text: 10:00 AM
+              - generic [ref=e146]:
+                - img [ref=e147]
+                - text: 0/44 booked
+          - generic [ref=e153]:
+            - generic [ref=e154]: $0
+            - generic [ref=e155]: est. revenue
+            - generic [ref=e156]:
+              - button "Check-In" [ref=e157]
+              - button "Notify" [ref=e158]
+        - generic [ref=e159] [cursor=pointer]:
+          - generic [ref=e160]:
+            - generic [ref=e161]:
+              - generic [ref=e162]: College Station
+              - generic [ref=e163]: →
+              - generic [ref=e164]: Dallas
+              - generic [ref=e165]: DTH-203
+            - generic [ref=e166]:
+              - generic [ref=e167]:
+                - img [ref=e168]
+                - text: September 5, 2026
+              - generic [ref=e170]:
+                - img [ref=e171]
+                - text: 07:00 AM
+              - generic [ref=e174]:
+                - img [ref=e175]
+                - text: 1/44 booked
+          - generic [ref=e182]:
+            - generic [ref=e183]: $35
+            - generic [ref=e184]: est. revenue
+            - generic [ref=e185]:
+              - button "Check-In" [ref=e186]
+              - button "Notify" [ref=e187]
+        - generic [ref=e188] [cursor=pointer]:
+          - generic [ref=e189]:
+            - generic [ref=e190]:
+              - generic [ref=e191]: College Station
+              - generic [ref=e192]: →
+              - generic [ref=e193]: Houston
+              - generic [ref=e194]: DTH-201
+            - generic [ref=e195]:
+              - generic [ref=e196]:
+                - img [ref=e197]
+                - text: August 15, 2026
+              - generic [ref=e199]:
+                - img [ref=e200]
+                - text: 08:00 AM
+              - generic [ref=e203]:
+                - img [ref=e204]
+                - text: 1/44 booked
+          - generic [ref=e211]:
+            - generic [ref=e212]: $28
+            - generic [ref=e213]: est. revenue
+            - generic [ref=e214]:
+              - button "Check-In" [ref=e215]
+              - button "Notify" [ref=e216]
 ```
 
 # Test source
 
 ```ts
-  366 |   test('Test 8: Account page profile editing and guardian management', async () => {
-  367 |     await page.locator('#screen-passenger [data-tab="account"]').click();
-  368 |     await waitForSpinner();
-  369 | 
-  370 |     const passenger = page.locator('#screen-passenger');
   371 | 
   372 |     // Profile section
   373 |     await expect(passenger.getByText('Account Settings')).toBeVisible({ timeout: 5000 });
@@ -240,13 +304,13 @@ Call log:
   463 |     await expect(driver.locator('.nav-item', { hasText: 'My Routes' })).toBeVisible({ timeout: 5000 });
   464 |     await expect(driver.getByText('Total Passengers')).toBeVisible({ timeout: 5000 });
   465 |     await expect(driver.getByText('Upcoming Trips')).toBeVisible({ timeout: 5000 });
-> 466 |     await expect(driver.getByText('Location Sharing')).toBeVisible({ timeout: 5000 });
-      |                                                        ^ Error: expect(locator).toBeVisible() failed
+  466 |     await expect(driver.locator('.section-title', { hasText: 'Location Sharing' })).toBeVisible({ timeout: 5000 });
   467 | 
   468 |     // My Routes
   469 |     await driver.locator('[data-tab="routes"]').click();
   470 |     await waitForSpinner();
-  471 |     await expect(driver.getByText('My Routes')).toBeVisible({ timeout: 5000 });
+> 471 |     await expect(driver.getByText('My Routes')).toBeVisible({ timeout: 5000 });
+      |                                                 ^ Error: expect(locator).toBeVisible() failed
   472 |     const hasDriverRoutes = await driver.locator('.route-card').first().isVisible().catch(() => false);
   473 |     if (hasDriverRoutes) {
   474 |       await expect(driver.locator('.route-card').first()).toBeVisible({ timeout: 5000 });
