@@ -446,6 +446,10 @@ test.describe.serial('DormToHome E2E Tests', () => {
   // ─── TEST 10: DRIVER LOGIN AND DASHBOARD ──────────────
 
   test('Test 10: Driver login and all driver features', async () => {
+    // Navigate from landing to login
+    await page.locator('#screen-landing button', { hasText: 'Sign In' }).click();
+    await expect(page.locator('#screen-login')).toBeVisible({ timeout: 5000 });
+
     // Sign in as driver
     await page.fill('#login-email', 'marcus@dormtohome.com');
     await page.fill('#login-pass', 'password123');

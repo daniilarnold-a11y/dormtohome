@@ -6,62 +6,90 @@
 
 # Test info
 
-- Name: e2e.test.js >> DormToHome E2E Tests >> Test 9: Sign Out redirects to login
-- Location: tests/e2e.test.js:433:3
+- Name: e2e.test.js >> DormToHome E2E Tests >> Test 10: Driver login and all driver features
+- Location: tests/e2e.test.js:448:3
 
 # Error details
 
 ```
-Error: expect(locator).toBeVisible() failed
+Test timeout of 45000ms exceeded.
+```
 
-Locator:  locator('#screen-login')
-Expected: visible
-Received: hidden
-Timeout:  5000ms
-
+```
+Error: page.fill: Target page, context or browser has been closed
 Call log:
-  - Expect "toBeVisible" with timeout 5000ms
-  - waiting for locator('#screen-login')
-    14 × locator resolved to <div id="screen-login" class="screen auth-screen">…</div>
-       - unexpected value "hidden"
+  - waiting for locator('#login-email')
+    - locator resolved to <input type="email" id="login-email" class="form-input" placeholder="you@example.com"/>
+    - fill("marcus@dormtohome.com")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    89 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
 
 ```
 
+# Page snapshot
+
 ```yaml
-- navigation:
-  - img
-  - text: DormToHome
-  - button "Sign In"
-  - button "Get Started"
-- text: ✦ Premium Student Bus Travel v2
-- heading "Travel home with comfort & peace of mind" [level=1]:
-  - text: Travel
-  - emphasis: home
-  - text: with comfort & peace of mind
-- paragraph: Safe, reliable bus routes connecting campuses to home. Real-time tracking, guardian notifications, and seamless booking.
-- text: From
-- img
-- textbox "College Station, TX"
-- text: To
-- img
-- textbox "Houston, TX"
-- text: Date
-- img
-- textbox
-- button "Search Rides"
-- text: 4,200+ Trips Completed 98% On-Time Rate 120+ Active Routes 12K+ Happy Riders
+- generic [ref=e2]:
+  - navigation [ref=e3]:
+    - generic [ref=e4] [cursor=pointer]:
+      - img [ref=e6]
+      - generic [ref=e9]: DormToHome
+    - generic [ref=e10]:
+      - button "Sign In" [ref=e11] [cursor=pointer]
+      - button "Get Started" [ref=e12] [cursor=pointer]
+  - generic [ref=e13]:
+    - generic [ref=e14]: ✦ Premium Student Bus Travel v2
+    - heading "Travel home with comfort & peace of mind" [level=1] [ref=e15]:
+      - text: Travel
+      - emphasis [ref=e16]: home
+      - text: with comfort & peace of mind
+    - paragraph [ref=e17]: Safe, reliable bus routes connecting campuses to home. Real-time tracking, guardian notifications, and seamless booking.
+    - generic [ref=e19]:
+      - generic [ref=e20]:
+        - generic [ref=e21]: From
+        - generic [ref=e22]:
+          - img
+          - textbox "College Station, TX" [ref=e23]
+      - generic [ref=e24]:
+        - generic [ref=e25]: To
+        - generic [ref=e26]:
+          - img
+          - textbox "Houston, TX" [ref=e27]
+      - generic [ref=e28]:
+        - generic [ref=e29]: Date
+        - generic [ref=e30]:
+          - img
+          - textbox [ref=e31]
+      - button "Search Rides" [ref=e32] [cursor=pointer]
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]: 4,200+
+        - generic [ref=e36]: Trips Completed
+      - generic [ref=e37]:
+        - generic [ref=e38]: 98%
+        - generic [ref=e39]: On-Time Rate
+      - generic [ref=e40]:
+        - generic [ref=e41]: 120+
+        - generic [ref=e42]: Active Routes
+      - generic [ref=e43]:
+        - generic [ref=e44]: 12K+
+        - generic [ref=e45]: Happy Riders
 ```
 
 # Test source
 
 ```ts
-  343 |       const chatInput = passenger.locator('#chat-input');
-  344 |       await expect(chatInput).toBeVisible({ timeout: 3000 });
-  345 |       const testMessage = `Test message ${Date.now()}`;
-  346 |       await chatInput.fill(testMessage);
-  347 | 
-  348 |       // Click send button
-  349 |       await passenger.locator('button', { hasText: 'Send' }).click();
   350 |       await page.waitForTimeout(1500);
   351 | 
   352 |       // Message should appear in chat
@@ -155,15 +183,15 @@ Call log:
   440 |     await signOutBtn.click();
   441 | 
   442 |     // Confirm dialog is auto-accepted by the handler
-> 443 |     await expect(page.locator('#screen-login')).toBeVisible({ timeout: 5000 });
-      |                                                 ^ Error: expect(locator).toBeVisible() failed
+  443 |     await expect(page.locator('#screen-landing')).toBeVisible({ timeout: 5000 });
   444 |   });
   445 | 
   446 |   // ─── TEST 10: DRIVER LOGIN AND DASHBOARD ──────────────
   447 | 
   448 |   test('Test 10: Driver login and all driver features', async () => {
   449 |     // Sign in as driver
-  450 |     await page.fill('#login-email', 'marcus@dormtohome.com');
+> 450 |     await page.fill('#login-email', 'marcus@dormtohome.com');
+      |                ^ Error: page.fill: Target page, context or browser has been closed
   451 |     await page.fill('#login-pass', 'password123');
   452 |     await page.locator('#login-btn').click();
   453 |     await expect(page.locator('#screen-driver')).toBeVisible({ timeout: 12000 });
@@ -257,4 +285,11 @@ Call log:
   541 |   // ─── TEST 11: LANDING PAGE REVISIT ────────────────────
   542 | 
   543 |   test('Test 11: Landing page is accessible after sign out', async () => {
+  544 |     // Should be on login screen now
+  545 |     await page.locator('#screen-login .auth-link a', { hasText: 'Home' }).click();
+  546 |     await expect(page.locator('#screen-landing')).toBeVisible({ timeout: 5000 });
+  547 |     await expect(page.locator('#screen-landing .hero-title')).toBeVisible({ timeout: 3000 });
+  548 |   });
+  549 | });
+  550 | 
 ```
