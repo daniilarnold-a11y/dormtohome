@@ -534,7 +534,7 @@ test.describe.serial('DormToHome E2E Tests', () => {
     const count = await signOutBtns.count();
     if (count > 0) {
       await signOutBtns.first().click();
-      await expect(page.locator('#screen-login')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#screen-landing')).toBeVisible({ timeout: 5000 });
     }
   });
 

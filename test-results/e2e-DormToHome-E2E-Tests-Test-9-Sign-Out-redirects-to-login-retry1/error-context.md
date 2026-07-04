@@ -6,140 +6,74 @@
 
 # Test info
 
-- Name: e2e.test.js >> DormToHome E2E Tests >> Test 10: Driver login and all driver features
-- Location: tests/e2e.test.js:448:3
+- Name: e2e.test.js >> DormToHome E2E Tests >> Test 9: Sign Out redirects to login
+- Location: tests/e2e.test.js:433:3
 
 # Error details
 
 ```
 Error: expect(locator).toBeVisible() failed
 
-Locator: locator('#screen-driver').getByText('Location Sharing')
+Locator:  locator('#screen-login')
 Expected: visible
-Error: strict mode violation: locator('#screen-driver').getByText('Location Sharing') resolved to 2 elements:
-    1) <div class="section-title">Location Sharing</div> aka getByText('Location Sharing', { exact: true })
-    2) <div class="text-sm">…</div> aka getByText('Location sharing is active')
+Received: hidden
+Timeout:  5000ms
 
 Call log:
   - Expect "toBeVisible" with timeout 5000ms
-  - waiting for locator('#screen-driver').getByText('Location Sharing')
+  - waiting for locator('#screen-login')
+    14 × locator resolved to <div id="screen-login" class="screen auth-screen">…</div>
+       - unexpected value "hidden"
 
 ```
 
-# Page snapshot
-
 ```yaml
-- generic [active] [ref=e1]:
-  - generic:
-    - generic [ref=e2]:
-      - generic [ref=e3]: ℹ
-      - generic [ref=e4]: Signed out
-    - generic [ref=e5]:
-      - generic [ref=e6]: ✓
-      - generic [ref=e7]: Welcome back, Marcus!
-  - generic [ref=e9]:
-    - banner [ref=e10]:
-      - generic [ref=e11] [cursor=pointer]:
-        - img [ref=e13]
-        - generic [ref=e16]: DormToHome
-      - navigation [ref=e17]:
-        - generic [ref=e18] [cursor=pointer]: Dashboard
-        - generic [ref=e19] [cursor=pointer]: My Routes
-        - generic [ref=e20] [cursor=pointer]: New Route
-        - generic [ref=e21] [cursor=pointer]: Check-In
-        - generic [ref=e22] [cursor=pointer]: Live
-        - generic [ref=e23] [cursor=pointer]: Requests
-        - generic [ref=e24] [cursor=pointer]: Messages
-      - generic [ref=e26]:
-        - generic [ref=e27]: Live
-        - button [ref=e29] [cursor=pointer]:
-          - img [ref=e30]
-        - generic [ref=e34] [cursor=pointer]: MD
-    - generic [ref=e35]:
-      - generic [ref=e36]:
-        - generic [ref=e37]:
-          - generic [ref=e38]: Driver Dashboard
-          - generic [ref=e39]: Marcus Davis
-        - generic [ref=e40]:
-          - button "Sign Out" [ref=e41] [cursor=pointer]
-          - button "Send Update" [ref=e42] [cursor=pointer]:
-            - img [ref=e43]
-            - text: Send Update
-          - button "+ New Route" [ref=e46] [cursor=pointer]
-      - generic [ref=e47]:
-        - generic [ref=e48]:
-          - generic [ref=e49]: "6"
-          - generic [ref=e50]: My Routes
-          - generic [ref=e51]: ↑ +2
-        - generic [ref=e61]:
-          - generic [ref=e62]: "4"
-          - generic [ref=e63]: Total Passengers
-          - generic [ref=e64]: ↑ +18
-        - generic [ref=e74]:
-          - generic [ref=e75]: $139
-          - generic [ref=e76]: Revenue (Est.)
-          - generic [ref=e77]: ↑ +$340
-        - generic [ref=e87]:
-          - generic [ref=e88]: "4.92"
-          - generic [ref=e89]: Avg. Rating
-          - generic [ref=e90]: ↑ +0.1
-      - generic [ref=e100]:
-        - generic [ref=e101]:
-          - generic [ref=e102]:
-            - generic [ref=e103]: Upcoming Trips
-            - button "View All" [ref=e104] [cursor=pointer]
-          - generic [ref=e105]:
-            - generic [ref=e106]:
-              - generic [ref=e107]: College Station → Houston
-              - generic [ref=e108]:
-                - text: August 15, 2026 · 08:00 AM ·
-                - generic [ref=e109]: DTH-201
-            - button "Check-In" [ref=e110] [cursor=pointer]
-          - generic [ref=e111]:
-            - generic [ref=e112]:
-              - generic [ref=e113]: College Station → Dallas
-              - generic [ref=e114]:
-                - text: September 5, 2026 · 07:00 AM ·
-                - generic [ref=e115]: DTH-203
-            - button "Check-In" [ref=e116] [cursor=pointer]
-          - generic [ref=e117]:
-            - generic [ref=e118]:
-              - generic [ref=e119]: College Station → San Antonio
-              - generic [ref=e120]:
-                - text: September 15, 2026 · 10:00 AM ·
-                - generic [ref=e121]: DTH-205
-            - button "Check-In" [ref=e122] [cursor=pointer]
-          - generic [ref=e123]:
-            - generic [ref=e124]:
-              - generic [ref=e125]: Austin → Dallas
-              - generic [ref=e126]:
-                - text: September 20, 2026 · 06:30 AM ·
-                - generic [ref=e127]: DTH-206
-            - button "Check-In" [ref=e128] [cursor=pointer]
-          - generic [ref=e129]:
-            - generic [ref=e130]:
-              - generic [ref=e131]: Dallas → College Station
-              - generic [ref=e132]:
-                - text: October 1, 2026 · 01:00 PM ·
-                - generic [ref=e133]: DTH-208
-            - button "Check-In" [ref=e134] [cursor=pointer]
-        - generic [ref=e135]:
-          - generic [ref=e136]: Location Sharing
-          - generic [ref=e139]:
-            - text: Location sharing is
-            - strong [ref=e140]: active
-          - generic [ref=e142]: Your location updates every 10 seconds while on an active trip. Passengers and guardians can see your live position on the map.
-          - generic [ref=e143]: Quick Actions
-          - generic [ref=e144]:
-            - button "Open Check-In" [ref=e145] [cursor=pointer]
-            - button "View Requests" [ref=e146] [cursor=pointer]
-            - button "Create Route" [ref=e147] [cursor=pointer]
-            - button "Send Update" [ref=e148] [cursor=pointer]
+- navigation:
+  - img
+  - text: DormToHome
+  - button "Sign In"
+  - button "Get Started"
+- text: ✦ Premium Student Bus Travel v2
+- heading "Travel home with comfort & peace of mind" [level=1]:
+  - text: Travel
+  - emphasis: home
+  - text: with comfort & peace of mind
+- paragraph: Safe, reliable bus routes connecting campuses to home. Real-time tracking, guardian notifications, and seamless booking.
+- text: From
+- img
+- textbox "College Station, TX"
+- text: To
+- img
+- textbox "Houston, TX"
+- text: Date
+- img
+- textbox
+- button "Search Rides"
+- text: 4,200+ Trips Completed 98% On-Time Rate 120+ Active Routes 12K+ Happy Riders
 ```
 
 # Test source
 
 ```ts
+  343 |       const chatInput = passenger.locator('#chat-input');
+  344 |       await expect(chatInput).toBeVisible({ timeout: 3000 });
+  345 |       const testMessage = `Test message ${Date.now()}`;
+  346 |       await chatInput.fill(testMessage);
+  347 | 
+  348 |       // Click send button
+  349 |       await passenger.locator('button', { hasText: 'Send' }).click();
+  350 |       await page.waitForTimeout(1500);
+  351 | 
+  352 |       // Message should appear in chat
+  353 |       const lastMsg = passenger.locator('.chat-msg').last();
+  354 |       await expect(lastMsg).toContainText(testMessage, { timeout: 5000 });
+  355 |     } else {
+  356 |       // No chat rooms — empty state
+  357 |       const hasEmpty = await passenger.getByText('No trips').isVisible().catch(() => false);
+  358 |       if (!hasEmpty) {
+  359 |         // Chat UI might not have loaded; that's OK for this test
+  360 |       }
+  361 |     }
   362 |   });
   363 | 
   364 |   // ─── TEST 8: ACCOUNT PAGE ─────────────────────────────
@@ -221,7 +155,8 @@ Call log:
   440 |     await signOutBtn.click();
   441 | 
   442 |     // Confirm dialog is auto-accepted by the handler
-  443 |     await expect(page.locator('#screen-login')).toBeVisible({ timeout: 5000 });
+> 443 |     await expect(page.locator('#screen-login')).toBeVisible({ timeout: 5000 });
+      |                                                 ^ Error: expect(locator).toBeVisible() failed
   444 |   });
   445 | 
   446 |   // ─── TEST 10: DRIVER LOGIN AND DASHBOARD ──────────────
@@ -240,8 +175,7 @@ Call log:
   459 |     await expect(driver.locator('.nav-item', { hasText: 'My Routes' })).toBeVisible({ timeout: 5000 });
   460 |     await expect(driver.getByText('Total Passengers')).toBeVisible({ timeout: 5000 });
   461 |     await expect(driver.getByText('Upcoming Trips')).toBeVisible({ timeout: 5000 });
-> 462 |     await expect(driver.getByText('Location Sharing')).toBeVisible({ timeout: 5000 });
-      |                                                        ^ Error: expect(locator).toBeVisible() failed
+  462 |     await expect(driver.getByText('Location Sharing')).toBeVisible({ timeout: 5000 });
   463 | 
   464 |     // My Routes
   465 |     await driver.locator('[data-tab="routes"]').click();
@@ -323,11 +257,4 @@ Call log:
   541 |   // ─── TEST 11: LANDING PAGE REVISIT ────────────────────
   542 | 
   543 |   test('Test 11: Landing page is accessible after sign out', async () => {
-  544 |     // Should be on login screen now
-  545 |     await page.locator('#screen-login .auth-link a', { hasText: 'Home' }).click();
-  546 |     await expect(page.locator('#screen-landing')).toBeVisible({ timeout: 5000 });
-  547 |     await expect(page.locator('#screen-landing .hero-title')).toBeVisible({ timeout: 3000 });
-  548 |   });
-  549 | });
-  550 | 
 ```
