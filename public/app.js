@@ -88,6 +88,84 @@ const CITIES = [
   {n:'Rowlett',s:'TX',z:'75088'},
 ];
 
+// ─── CITY COORDINATES ──────────────────────────────────────
+const CITY_COORDS = {
+  'College Station': { lat: 30.6280, lng: -96.3344 },
+  'Houston': { lat: 29.7604, lng: -95.3698 },
+  'Houston Heights': { lat: 29.7900, lng: -95.4000 },
+  'Austin': { lat: 30.2672, lng: -97.7431 },
+  'Dallas': { lat: 32.7767, lng: -96.7970 },
+  'San Antonio': { lat: 29.4241, lng: -98.4936 },
+  'Lubbock': { lat: 33.5779, lng: -101.8552 },
+  'Waco': { lat: 31.5493, lng: -97.1467 },
+  'Bryan': { lat: 30.6744, lng: -96.3700 },
+  'Round Rock': { lat: 30.5083, lng: -97.6789 },
+  'Plano': { lat: 33.0198, lng: -96.6989 },
+  'Fort Worth': { lat: 32.7555, lng: -97.3308 },
+  'The Woodlands': { lat: 30.1583, lng: -95.4892 },
+  'Sugar Land': { lat: 29.6192, lng: -95.6349 },
+  'Conroe': { lat: 30.3119, lng: -95.4561 },
+  'Huntsville': { lat: 30.7235, lng: -95.5508 },
+  'Temple': { lat: 31.0982, lng: -97.3428 },
+  'Killeen': { lat: 31.1171, lng: -97.7278 },
+  'Galveston': { lat: 29.3013, lng: -94.7977 },
+  'Corpus Christi': { lat: 27.8006, lng: -97.3964 },
+  'San Marcos': { lat: 29.8825, lng: -97.9401 },
+  'Denton': { lat: 33.2148, lng: -97.1331 },
+  'Pearland': { lat: 29.5636, lng: -95.2860 },
+  'Pflugerville': { lat: 30.4394, lng: -97.6200 },
+  'Georgetown': { lat: 30.6327, lng: -97.6772 },
+  'Allen': { lat: 33.1032, lng: -96.6706 },
+  'Arlington': { lat: 32.7357, lng: -97.1081 },
+  'Bedford': { lat: 32.8440, lng: -97.1431 },
+  'Carrollton': { lat: 32.9756, lng: -96.8898 },
+  'Cedar Hill': { lat: 32.5885, lng: -96.9561 },
+  'Coppell': { lat: 32.9546, lng: -97.0150 },
+  'Euless': { lat: 32.8371, lng: -97.0819 },
+  'Flower Mound': { lat: 33.0146, lng: -97.0970 },
+  'Frisco': { lat: 33.1507, lng: -96.8236 },
+  'Garland': { lat: 32.9126, lng: -96.6389 },
+  'Grand Prairie': { lat: 32.7460, lng: -97.0028 },
+  'Grapevine': { lat: 32.9343, lng: -97.0781 },
+  'Irving': { lat: 32.8140, lng: -96.9489 },
+  'Lewisville': { lat: 33.0462, lng: -96.9942 },
+  'McKinney': { lat: 33.1976, lng: -96.6153 },
+  'Mesquite': { lat: 32.7668, lng: -96.5992 },
+  'Richardson': { lat: 32.9482, lng: -96.7293 },
+  'Rockwall': { lat: 32.9312, lng: -96.4593 },
+  'Rowlett': { lat: 32.9029, lng: -96.5639 },
+};
+
+function stripCityState(v) {
+  return (v || '').replace(/, ?[A-Za-z]{2}$/, '').trim();
+}
+
+function isValidCity(v) {
+  const name = stripCityState(v);
+  if (!name) return false;
+  return CITIES.some(c => c.n.toLowerCase() === name.toLowerCase());
+}
+
+function estimateTravelTime(fromCity, toCity) {
+  const from = stripCityState(fromCity);
+  const to = stripCityState(toCity);
+  const fc = CITY_COORDS[from];
+  const tc = CITY_COORDS[to];
+  if (!fc || !tc) return { text: '3h 30m', minutes: 210 };
+  const R = 3959;
+  const dLat = (tc.lat - fc.lat) * Math.PI / 180;
+  const dLng = (tc.lng - fc.lng) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(fc.lat * Math.PI / 180) * Math.cos(tc.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const dist = R * c * 1.3;
+  const totalMin = Math.round(dist / 65 * 60);
+  if (totalMin < 10) return { text: '0h 10m', minutes: 10 };
+  if (totalMin > 720) return { text: '12h 0m', minutes: 720 };
+  const hh = Math.floor(totalMin / 60);
+  const mm = totalMin % 60;
+  return { text: `${hh}h ${mm}m`, minutes: totalMin };
+}
+
 // ─── API ───────────────────────────────────────────────────
 async function api(method, path, body, auth = true) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
@@ -1364,12 +1442,14 @@ function buildCreateStep() {
     <div class="section-title">Route Information</div>
     <div class="two-col">
       <div class="form-group" style="position:relative"><label class="form-label" style="color:var(--navy)">Departure City</label>
-        <input class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="cr-from" placeholder="College Station, TX" value="${d.from_city || ''}" oninput="autocityCreate(this,'cr-from-dd')">
+        <input class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="cr-from" placeholder="College Station, TX" value="${d.from_city || ''}" oninput="autocityCreate(this,'cr-from-dd')" onblur="validateCityInput('cr-from','cr-from-err')">
         <div class="city-dropdown" id="cr-from-dd"></div>
+        <div class="city-error" id="cr-from-err" style="color:var(--error);font-size:.75rem;margin-top:4px;display:none">City not found — please select from the dropdown</div>
       </div>
       <div class="form-group" style="position:relative"><label class="form-label" style="color:var(--navy)">Arrival City</label>
-        <input class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="cr-to" placeholder="Houston, TX" value="${d.to_city || ''}" oninput="autocityCreate(this,'cr-to-dd')">
+        <input class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="cr-to" placeholder="Houston, TX" value="${d.to_city || ''}" oninput="autocityCreate(this,'cr-to-dd')" onblur="validateCityInput('cr-to','cr-to-err')">
         <div class="city-dropdown" id="cr-to-dd"></div>
+        <div class="city-error" id="cr-to-err" style="color:var(--error);font-size:.75rem;margin-top:4px;display:none">City not found — please select from the dropdown</div>
       </div>
     </div>
     <div class="two-col">
@@ -1469,6 +1549,11 @@ function collectCreateData() {
 
 function createNext() {
   collectCreateData();
+  if (S.createStep === 1) {
+    const fromOk = validateCityInput('cr-from', 'cr-from-err');
+    const toOk = validateCityInput('cr-to', 'cr-to-err');
+    if (!fromOk || !toOk) return;
+  }
   S.createStep = Math.min(4, S.createStep + 1);
   renderCreateRoute();
 }
@@ -1493,10 +1578,16 @@ async function postRoute() {
 function updateCreateArrival() {
   const dep = document.getElementById('cr-dep-time')?.value;
   if (!dep) return;
+  const from = document.getElementById('cr-from')?.value;
+  const to = document.getElementById('cr-to')?.value;
+  const travel = estimateTravelTime(from, to);
   const [h, m] = dep.split(':').map(Number);
-  const arr = new Date(2000, 0, 1, h + 3, m + 30);
+  const totalMin = h * 60 + m + travel.minutes;
+  const arr = new Date(2000, 0, 1, 0, totalMin);
   const arrEl = document.getElementById('cr-arr-time');
   if (arrEl) arrEl.value = `${String(arr.getHours()).padStart(2, '0')}:${String(arr.getMinutes()).padStart(2, '0')}`;
+  const durEl = document.getElementById('cr-duration');
+  if (durEl) durEl.value = travel.text;
 }
 
 // ─── DRIVER: CHECK-IN ────────────────────────────────────
@@ -1821,13 +1912,15 @@ function showRequestStep() {
     <div class="steps-bar">${steps.map((s, i) => `<div class="step-i ${i + 1 < S.reqStep ? 'done' : i + 1 === S.reqStep ? 'current' : ''}"><div class="step-circle">${i + 1 < S.reqStep ? '✓' : i + 1}</div><span class="step-label">${s}</span></div>`).join('')}</div>`;
 
   if (S.reqStep === 1) html += `<div class="section-title">Where are you departing from?</div>
-    <div style="position:relative"><input class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="req-from" placeholder="Search city..." value="${S.reqData.from_city || ''}" oninput="autocityCreate(this,'req-from-dd')">
-    <div class="city-dropdown" id="req-from-dd"></div></div>
+    <div style="position:relative"><input class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="req-from" placeholder="Search city..." value="${S.reqData.from_city || ''}" oninput="autocityCreate(this,'req-from-dd')" onblur="validateCityInput('req-from','req-from-err')">
+    <div class="city-dropdown" id="req-from-dd"></div>
+    <div class="city-error" id="req-from-err" style="color:var(--error);font-size:.75rem;margin-top:4px;display:none">City not found — please select from the dropdown</div></div>
     <div style="display:flex;gap:10px;margin-top:16px"><button class="btn btn-sm" style="background:var(--gray-100);color:var(--error)" onclick="cancelRequest()">Cancel</button><button class="btn btn-gold" onclick="reqNext()">Next →</button></div>`;
 
   else if (S.reqStep === 2) html += `<div class="section-title">Where are you going?</div>
-    <div style="position:relative"><input class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="req-to" placeholder="Search city..." value="${S.reqData.to_city || ''}" oninput="autocityCreate(this,'req-to-dd')">
-    <div class="city-dropdown" id="req-to-dd"></div></div>
+    <div style="position:relative"><input class="form-input" style="color:var(--navy-dark);background:var(--gray-100)" id="req-to" placeholder="Search city..." value="${S.reqData.to_city || ''}" oninput="autocityCreate(this,'req-to-dd')" onblur="validateCityInput('req-to','req-to-err')">
+    <div class="city-dropdown" id="req-to-dd"></div>
+    <div class="city-error" id="req-to-err" style="color:var(--error);font-size:.75rem;margin-top:4px;display:none">City not found — please select from the dropdown</div></div>
     <div style="display:flex;gap:10px;margin-top:16px"><button class="btn btn-sm" style="background:var(--gray-100);color:var(--error)" onclick="cancelRequest()">Cancel</button><button class="btn btn-sm" style="background:var(--gray-100);color:var(--navy)" onclick="reqBack()">← Back</button><button class="btn btn-gold" onclick="reqNext()">Next →</button></div>`;
 
   else if (S.reqStep === 3) html += `<div class="section-title">What date do you need this route?</div>
@@ -1871,8 +1964,14 @@ function showRequestStep() {
 }
 
 function reqNext() {
-  if (S.reqStep === 1) S.reqData.from_city = document.getElementById('req-from')?.value;
-  if (S.reqStep === 2) S.reqData.to_city = document.getElementById('req-to')?.value;
+  if (S.reqStep === 1) {
+    S.reqData.from_city = document.getElementById('req-from')?.value;
+    if (!validateCityInput('req-from', 'req-from-err')) return;
+  }
+  if (S.reqStep === 2) {
+    S.reqData.to_city = document.getElementById('req-to')?.value;
+    if (!validateCityInput('req-to', 'req-to-err')) return;
+  }
   if (S.reqStep === 3) S.reqData.requested_date = document.getElementById('req-date')?.value;
   if (S.reqStep === 4) {
     S.reqData.requested_time = document.getElementById('req-dep')?.value;
@@ -1901,8 +2000,12 @@ function cancelRequest() {
 function updateReqArrival() {
   const dep = document.getElementById('req-dep')?.value;
   if (!dep) return;
+  const from = S.reqData.from_city || document.getElementById('req-from')?.value;
+  const to = S.reqData.to_city || document.getElementById('req-to')?.value;
+  const travel = estimateTravelTime(from, to);
   const [h, m] = dep.split(':').map(Number);
-  const arr = new Date(2000, 0, 1, h + 3, m + 30);
+  const totalMin = h * 60 + m + travel.minutes;
+  const arr = new Date(2000, 0, 1, 0, totalMin);
   const el = document.getElementById('req-arr');
   if (el) el.value = `${String(arr.getHours()).padStart(2, '0')}:${String(arr.getMinutes()).padStart(2, '0')}`;
 }
@@ -1910,8 +2013,12 @@ function updateReqArrival() {
 function updateReqDeparture() {
   const arr = document.getElementById('req-arr')?.value;
   if (!arr) return;
+  const from = S.reqData.from_city || document.getElementById('req-from')?.value;
+  const to = S.reqData.to_city || document.getElementById('req-to')?.value;
+  const travel = estimateTravelTime(from, to);
   const [h, m] = arr.split(':').map(Number);
-  const dep = new Date(2000, 0, 1, h - 3, m - 30);
+  const totalMin = h * 60 + m - travel.minutes;
+  const dep = new Date(2000, 0, 1, 0, totalMin);
   const el = document.getElementById('req-dep');
   if (el) el.value = `${String(dep.getHours()).padStart(2, '0')}:${String(dep.getMinutes()).padStart(2, '0')}`;
 }
@@ -1981,9 +2088,26 @@ function selectCity(inputId, ddId, val) {
   const dd = document.getElementById(ddId);
   if (input) input.value = val;
   if (dd) dd.classList.remove('open');
+  const err = document.getElementById(inputId + '-err');
+  if (err) { err.style.display = 'none'; if (input) input.style.borderColor = ''; }
 }
 
 function stripState(v) { return v.replace(/, ?[A-Za-z]{2}$/, '').trim(); }
+
+function validateCityInput(inputId, errorId) {
+  const input = document.getElementById(inputId);
+  const err = document.getElementById(errorId);
+  if (!input || !err) return;
+  if (!input.value.trim() || isValidCity(input.value)) {
+    err.style.display = 'none';
+    input.style.borderColor = '';
+    return true;
+  } else {
+    err.style.display = 'block';
+    input.style.borderColor = 'var(--error)';
+    return false;
+  }
+}
 
 function landingSearch() {
   const from = document.getElementById('land-from').value;
