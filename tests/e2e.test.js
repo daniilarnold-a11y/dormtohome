@@ -548,4 +548,109 @@ test.describe.serial('DormToHome E2E Tests', () => {
     await expect(page.locator('#screen-landing')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('#screen-landing .hero-title')).toBeVisible({ timeout: 3000 });
   });
+
+  // ─── TEST 12: TRAVEL TIME ESTIMATION ───────────────────
+
+  test('Test 12: Travel time estimation shows realistic duration (< 1hr)', async () => {
+    // Navigate to login from landing
+    await page.locator('#screen-landing button', { hasText: 'Sign In' }).click();
+    await expect(page.locator('#screen-login')).toBeVisible({ timeout: 5000 });
+
+    // Log in as passenger
+    await page.fill('#login-email', 'alex@tamu.edu');
+    await page.fill('#login-pass', 'password123');
+    await page.locator('#login-btn').click();
+    await expect(page.locator('#screen-passenger')).toBeVisible({ timeout: 12000 });
+
+    const passenger = page.locator('#screen-passenger');
+
+    // Click Route Requests tab
+    await passenger.locator('[data-tab="routes"]').click();
+    await waitForSpinner();
+    const reqTab = passenger.locator('.tab', { hasText: 'Route Requests' });
+    await expect(reqTab).toBeVisible({ timeout: 3000 });
+    await reqTab.click();
+
+    // Click 'Request a Route'
+    const requestBtn = passenger.locator('button', { hasText: 'Request Route' });
+    await expect(requestBtn).toBeVisible({ timeout: 3000 });
+    await requestBtn.click();
+
+    // Step 1: Enter departure 'Frisco, TX'
+    await expect(passenger.getByText('Where are you departing from?')).toBeVisible({ timeout: 3000 });
+    await page.fill('#req-from', 'Frisco, TX');
+    await passenger.locator('button', { hasText: 'Next' }).click();
+
+    // Step 2: Enter arrival 'Plano, TX'
+    await expect(passenger.getByText('Where are you going?')).toBeVisible({ timeout: 3000 });
+    await page.fill('#req-to', 'Plano, TX');
+    await passenger.locator('button', { hasText: 'Next' }).click();
+
+    // Step 3: Enter a date
+    await expect(passenger.getByText('What date do you need')).toBeVisible({ timeout: 3000 });
+    await page.fill('#req-date', '2026-08-15');
+    await passenger.locator('button', { hasText: 'Next' }).click();
+
+    // Step 4: Enter departure time and wait for auto-calculated arrival
+    await expect(passenger.getByText('What time do you need to depart')).toBeVisible({ timeout: 3000 });
+    await page.fill('#req-dep', '09:00');
+    await page.waitForTimeout(600);
+
+    // Read arrival time
+    const arrValue = await page.locator('#req-arr').inputValue();
+    const [depH, depM] = [9, 0];
+    const [arrH, arrM] = arrValue.split(':').map(Number);
+    const depTotal = depH * 60 + depM;
+    const arrTotal = arrH * 60 + arrM;
+    const diffMin = arrTotal - depTotal;
+
+    // Frisco → Plano is ~15 miles; should be well under 1 hour, not 3h30m
+    expect(diffMin).toBeGreaterThan(0);
+    expect(diffMin).toBeLessThan(60);
+  });
+
+  // ─── TEST 13: CITY VALIDATION ──────────────────────────
+
+  test('Test 13: City validation shows error and blocks advance on invalid city', async () => {
+    const passenger = page.locator('#screen-passenger');
+
+    // Navigate back from step 4 to step 1
+    for (let i = 0; i < 5; i++) {
+      const backBtn = passenger.locator('button', { hasText: '← Back' });
+      if (!(await backBtn.isVisible({ timeout: 500 }).catch(() => false))) break;
+      await backBtn.click();
+      await page.waitForTimeout(300);
+    }
+
+    // If we didn't reach step 1, cancel and restart the wizard
+    if (!(await passenger.getByText('Where are you departing from?').isVisible({ timeout: 2000 }).catch(() => false))) {
+      const cancelBtn = passenger.locator('button', { hasText: 'Cancel' });
+      if (await cancelBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await cancelBtn.click();
+        await page.waitForTimeout(500);
+      }
+      // Re-open
+      const requestBtn = passenger.locator('button', { hasText: 'Request Route' });
+      await expect(requestBtn).toBeVisible({ timeout: 3000 });
+      await requestBtn.click();
+    }
+
+    await expect(passenger.getByText('Where are you departing from?')).toBeVisible({ timeout: 3000 });
+
+    // Clear departure and type invalid city
+    await page.fill('#req-from', '');
+    await page.fill('#req-from', 'Fakecity123');
+
+    // Click Next — should be blocked
+    await passenger.locator('button', { hasText: 'Next' }).click();
+    await page.waitForTimeout(400);
+
+    // Error message should be visible
+    const errMsg = page.locator('#req-from-err');
+    await expect(errMsg).toBeVisible({ timeout: 3000 });
+    await expect(errMsg).toContainText('City not found');
+
+    // Confirm we did NOT advance to step 2
+    await expect(passenger.getByText('Where are you departing from?')).toBeVisible({ timeout: 3000 });
+  });
 });
