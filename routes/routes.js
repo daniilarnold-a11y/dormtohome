@@ -3,6 +3,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { all, get, run } = require('../db/database');
 const { authMiddleware, requireRole } = require('../middleware/auth');
+const { sendEmail, guardianCheckpointHTML } = require('../utils/email');
 
 async function enrichRoute(r) {
   if (!r) return null;
@@ -136,6 +137,44 @@ router.get('/:id/manifest', authMiddleware, async (req, res) => {
       FROM bookings b JOIN users u ON b.passenger_id=u.id
       WHERE b.route_id=$1 ORDER BY b.seat_number`, [req.params.id]);
     res.json(manifest);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/routes/simulate-checkpoint/:routeId
+router.post('/simulate-checkpoint/:routeId', authMiddleware, requireRole('driver'), async (req, res) => {
+  try {
+    const { stop_id } = req.body;
+    if (!stop_id) return res.status(400).json({ error: 'stop_id is required' });
+
+    const route = await get('SELECT * FROM routes WHERE id=$1', [req.params.routeId]);
+    if (!route) return res.status(404).json({ error: 'Route not found' });
+    if (route.driver_id !== req.user.id) return res.status(403).json({ error: 'Not your route' });
+
+    const stop = await get('SELECT * FROM route_stops WHERE id=$1 AND route_id=$2 AND type=$3', [stop_id, req.params.routeId, 'checkpoint']);
+    if (!stop) return res.status(404).json({ error: 'Checkpoint not found' });
+
+    const passengers = await all('SELECT DISTINCT b.passenger_id FROM bookings b WHERE b.route_id=$1', [req.params.routeId]);
+    let notifiedGuardians = 0;
+
+    for (const p of passengers) {
+      await run(`INSERT INTO notifications (id,user_id,title,body,"type") VALUES ($1,$2,$3,$4,$5)`,
+        [uuidv4(), p.passenger_id, `Checkpoint: ${stop.city}`, `Your bus has passed through ${stop.city}.`, 'info']);
+
+      const guardians = await all(`SELECT name, email FROM guardians WHERE passenger_id=$1 AND email IS NOT NULL AND email != '' AND checkpoint_notifs=1`, [p.passenger_id]);
+      for (const g of guardians) {
+        sendEmail(g.email, `Checkpoint Update — ${route.route_number}`, guardianCheckpointHTML({
+          guardianName: g.name,
+          routeNumber: route.route_number,
+          from: route.from_city,
+          to: route.to_city,
+          city: stop.city,
+          estimatedArrival: route.arrival_time,
+        }));
+        notifiedGuardians++;
+      }
+    }
+
+    res.json({ success: true, notified_guardians: notifiedGuardians, checkpoint_city: stop.city });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 

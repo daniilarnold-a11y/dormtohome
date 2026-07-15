@@ -580,6 +580,30 @@ test.describe.serial('DormToHome E2E Tests', () => {
       }
     }
 
+    // Live tab — Simulate Checkpoint button
+    await driver.locator('[data-tab="live"]').click();
+    await waitForSpinner();
+    await expect(driver.getByText('Live Tracking')).toBeVisible({ timeout: 5000 });
+    const hasCheckpoints = await page.evaluate(() => {
+      const sel = document.getElementById('checkpoint-select');
+      return sel ? sel.options.length > 1 : false;
+    });
+    if (hasCheckpoints) {
+      await page.evaluate(() => {
+        isLiveBroadcasting = true;
+        updateLiveBtnState(true);
+      });
+      await expect(page.locator('#simulate-section')).toBeVisible({ timeout: 3000 });
+      await expect(page.locator('#checkpoint-select')).toBeVisible({ timeout: 3000 });
+      await expect(driver.locator('button', { hasText: 'Send Checkpoint Notification' })).toBeVisible({ timeout: 3000 });
+      await expect(driver.getByText('Test / Simulate Checkpoint')).toBeVisible({ timeout: 3000 });
+      // Stop broadcasting to clean up
+      await page.evaluate(() => {
+        isLiveBroadcasting = false;
+        updateLiveBtnState(false);
+      });
+    }
+
     // Sign out from driver account
     await driver.locator('[data-tab="dashboard"]').click();
     await waitForSpinner();

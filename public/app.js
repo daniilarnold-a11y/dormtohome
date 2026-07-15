@@ -1768,7 +1768,7 @@ async function renderDriverLive() {
     S.activeRouteId = activeRoute.id;
     document.getElementById('d-content').innerHTML = buildDriverLivePage(activeRoute);
     setTimeout(() => {
-      if (S.activeRouteId) initDriverLiveTab(S.activeRouteId);
+      if (S.activeRouteId) initDriverLiveTab(activeRoute);
     }, 100);
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -2434,7 +2434,9 @@ function updateCheckinManifest(passengerName, seat) {
 let locationWatchId = null;
 let isLiveBroadcasting = false;
 
-function initDriverLiveTab(routeId) {
+function initDriverLiveTab(route) {
+  const routeId = route.id;
+  const checkpoints = (route.stops || []).filter(s => s.type === 'checkpoint');
   const liveSection = document.getElementById('driver-live-section');
   if (!liveSection) return;
 
@@ -2457,6 +2459,21 @@ function initDriverLiveTab(routeId) {
            style="margin-top:16px;font-size:13px;color:#6b7280;">
         Not broadcasting
       </div>
+      <div id="simulate-section"
+           style="display:none;margin-top:24px;padding-top:20px;border-top:1px solid var(--gray-200);text-align:left;">
+        <div style="font-size:.9rem;font-weight:600;color:var(--navy);margin-bottom:4px;">Test / Simulate Checkpoint</div>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:12px;">
+          Trigger a test checkpoint notification to guardians. No actual stop status is changed.
+        </p>
+        <select id="checkpoint-select" style="width:100%;padding:10px;border:1px solid var(--gray-200);border-radius:8px;margin-bottom:12px;color:var(--navy-dark);background:white;">
+          <option value="">Select a checkpoint…</option>
+          ${checkpoints.map(c => `<option value="${c.id}">${c.city}</option>`).join('')}
+        </select>
+        <button class="btn btn-outline-gold btn-full" onclick="simulateCheckpoint()">
+          Send Checkpoint Notification
+        </button>
+        <div id="simulate-result" style="margin-top:8px;font-size:13px;"></div>
+      </div>
     </div>
   `;
 
@@ -2469,6 +2486,25 @@ function initDriverLiveTab(routeId) {
       document.getElementById('live-status').textContent = 'Broadcasting your location…';
     }
   });
+}
+
+async function simulateCheckpoint() {
+  const select = document.getElementById('checkpoint-select');
+  const result = document.getElementById('simulate-result');
+  const stopId = select.value;
+  if (!stopId) {
+    result.textContent = 'Please select a checkpoint';
+    result.style.color = '#ef4444';
+    return;
+  }
+  try {
+    const res = await api('POST', '/routes/simulate-checkpoint/' + S.activeRouteId, { stop_id: stopId });
+    result.textContent = '✅ Checkpoint simulated! ' + res.notified_guardians + ' guardian(s) notified.';
+    result.style.color = '#22c55e';
+  } catch (e) {
+    result.textContent = '❌ ' + e.message;
+    result.style.color = '#ef4444';
+  }
 }
 
 function startLocationBroadcast(routeId) {
@@ -2525,6 +2561,8 @@ function updateLiveBtnState(active) {
   if (!btn) return;
   btn.textContent = active ? '⏹ Stop Broadcasting' : '▶ Go Live';
   btn.style.background = active ? '#ef4444' : '#22c55e';
+  const sim = document.getElementById('simulate-section');
+  if (sim) sim.style.display = active ? 'block' : 'none';
 }
 
 // ─── PASSENGER LIVE MAP ────────────────────────────────
