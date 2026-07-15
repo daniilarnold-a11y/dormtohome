@@ -1187,7 +1187,7 @@ function buildAccountPage(user, guardians) {
       <div class="card">
         <div class="section-title">Notifications</div>
         <div class="text-sm" style="margin-bottom:8px;margin-top:12px;font-weight:600;color:var(--navy)">User Notifications</div>
-        ${[['New route alerts','notif-routes'],['Chat messages','notif-chat']].map(([label,id])=>`
+        ${[['New route alerts','notif-routes'],['Chat messages','notif-chat'],['Booking confirmations','notif-booking']].map(([label,id])=>`
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)">
           <span style="font-size:.875rem;color:var(--navy-dark)">${label}</span>
           <div class="toggle on" onclick="this.classList.toggle('on')"></div>

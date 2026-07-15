@@ -438,6 +438,7 @@ test.describe.serial('DormToHome E2E Tests', () => {
     await expect(notifCard.getByText('User Notifications')).toBeVisible({ timeout: 3000 });
     await expect(notifCard.getByText('New route alerts')).toBeVisible({ timeout: 3000 });
     await expect(notifCard.getByText('Chat messages')).toBeVisible({ timeout: 3000 });
+    await expect(notifCard.getByText('Booking confirmations')).toBeVisible({ timeout: 3000 });
     await expect(notifCard.getByText('Guardian Notifications')).toBeVisible({ timeout: 3000 });
     await expect(notifCard.getByText('Arrival alerts (15 min)')).toBeVisible({ timeout: 3000 });
     await expect(notifCard.getByText('Check in alerts')).toBeVisible({ timeout: 3000 });
