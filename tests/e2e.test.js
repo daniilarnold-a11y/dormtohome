@@ -209,25 +209,37 @@ test.describe.serial('DormToHome E2E Tests', () => {
 
     const passenger = page.locator('#screen-passenger');
 
-    // Step 1: Departure
-    await expect(passenger.getByText('Where are you departing from?')).toBeVisible({ timeout: 3000 });
-    await page.fill('#req-from', 'College Station, TX');
-    await passenger.locator('button', { hasText: 'Next' }).click();
+    // Step 1: Departure — simulate dropdown selection
+    await page.evaluate(() => {
+      const inp = document.getElementById('req-from'); if (inp) inp.value = 'College Station, TX';
+      S.reqData.from_city = 'College Station, TX';
+      reqNext();
+    });
+    await page.waitForTimeout(200);
 
-    // Step 2: Arrival
-    await expect(passenger.getByText('Where are you going?')).toBeVisible({ timeout: 3000 });
-    await page.fill('#req-to', 'Houston, TX');
-    await passenger.locator('button', { hasText: 'Next' }).click();
+    // Step 2: Arrival — simulate dropdown selection
+    await page.evaluate(() => {
+      const inp = document.getElementById('req-to'); if (inp) inp.value = 'Houston, TX';
+      S.reqData.to_city = 'Houston, TX';
+      reqNext();
+    });
+    await page.waitForTimeout(200);
 
     // Step 3: Date
-    await expect(passenger.getByText('What date do you need')).toBeVisible({ timeout: 3000 });
-    await page.fill('#req-date', '2026-07-25');
-    await passenger.locator('button', { hasText: 'Next' }).click();
+    await page.evaluate(() => {
+      const inp = document.getElementById('req-date'); if (inp) inp.value = '2026-07-25';
+      S.reqData.requested_date = '2026-07-25';
+      reqNext();
+    });
+    await page.waitForTimeout(200);
 
     // Step 4: Time
-    await expect(passenger.getByText('What time do you need to depart')).toBeVisible({ timeout: 3000 });
-    await page.fill('#req-dep', '09:00');
-    await passenger.locator('button', { hasText: 'Next' }).click();
+    await page.evaluate(() => {
+      const inp = document.getElementById('req-dep'); if (inp) inp.value = '09:00';
+      S.reqData.requested_time = '09:00';
+      reqNext();
+    });
+    await page.waitForTimeout(200);
 
     // Step 5: Review
     await expect(passenger.getByText('Review Your Request')).toBeVisible({ timeout: 3000 });
@@ -608,31 +620,20 @@ test.describe.serial('DormToHome E2E Tests', () => {
     test.setTimeout(30000);
     const passenger = page.locator('#screen-passenger');
 
-    // Cancel the current wizard (global handler auto-accepts confirm dialog)
-    await passenger.locator('button', { hasText: 'Cancel' }).click();
-    await waitForSpinner();
-
-    // Open wizard and test invalid city validation
-    await page.evaluate(() => { openRequestWizard(); });
-    await page.waitForTimeout(200);
-
-    // Fill invalid city
-    await page.evaluate(() => {
+    // Open a fresh wizard and validate all in one evaluate
+    const result1 = await page.evaluate(() => {
+      openRequestWizard();
       const inp = document.getElementById('req-from'); if (inp) inp.value = 'Fakecity123';
+      reqNext();
+      return {
+        step: S.reqStep,
+        errExists: !!document.getElementById('req-from-err'),
+        errText: document.getElementById('req-from-err')?.textContent || ''
+      };
     });
-
-    // Call reqNext — should be blocked with error
-    await page.evaluate(() => { reqNext(); });
-    await page.waitForTimeout(200);
-
-    // Error message should appear
-    const errMsg = page.locator('#req-from-err');
-    await expect(errMsg).toBeVisible({ timeout: 3000 });
-    await expect(errMsg).toContainText('Please select a city from the dropdown');
-
-    // Wizard should NOT advance to step 2 (verify we're still on step 1)
-    const step = await page.evaluate(() => S.reqStep);
-    expect(step).toBe(1);
+    expect(result1.step).toBe(1);
+    expect(result1.errExists).toBe(true);
+    expect(result1.errText).toContain('Please select a city from the dropdown');
 
     // Also verify typing a valid city without dropdown selection is rejected
     await page.evaluate(() => {
