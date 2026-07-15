@@ -371,8 +371,7 @@ async function renderPassengerRoutes() {
     const routes = await api('GET', `/routes${query ? '?' + query : ''}`, null, false);
     S.allRoutes = routes;
     const reqs = await api('GET', '/requests');
-    const today = getTodayStr();
-    const activeReqs = reqs.filter(r => !r.requested_date || r.requested_date >= today);
+    const activeReqs = reqs.filter(r => isFutureDate(r.requested_date));
     S.requests = activeReqs;
     document.getElementById('p-content').innerHTML = buildRoutesPage(routes, activeReqs);
   } catch (e) { toast(e.message, 'error'); }
@@ -463,10 +462,11 @@ function buildRouteCard(r) {
 }
 
 function buildReqCard(r) {
+  if (!isFutureDate(r.requested_date)) return '';
   return `<div class="req-card" id="req-${r.id}">
     <div>
       <div style="font-weight:600;color:var(--navy);margin-bottom:3px">${String(r.from_city)} → ${String(r.to_city)}</div>
-      <div class="text-sm text-muted">${r.requested_date ? new Date(r.requested_date + 'T00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : 'Flexible'}</div>
+      <div class="text-sm text-muted">${formatReqDate(r.requested_date)}</div>
       <div class="text-xs text-muted" style="margin-top:2px">${ICON.clock()} Departs: ${r.requested_time || 'Any'}</div>
     </div>
     <div style="text-align:center">
@@ -1779,8 +1779,7 @@ function buildDriverLivePage(route) {
 async function renderRequested() {
   try {
     const reqs = await api('GET', '/requests');
-    const today = getTodayStr();
-    const activeReqs = reqs.filter(r => !r.requested_date || r.requested_date >= today);
+    const activeReqs = reqs.filter(r => isFutureDate(r.requested_date));
     document.getElementById('d-content').innerHTML = buildRequestedPage(activeReqs);
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -1952,6 +1951,35 @@ function toggleLocationSharing() {
 function getTodayStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function isFutureDate(dateStr) {
+  if (!dateStr) return false;
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  let d;
+  if (m) {
+    d = new Date(+m[1], +m[2] - 1, +m[3]);
+  } else {
+    d = new Date(dateStr);
+  }
+  if (isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  d.setHours(0, 0, 0, 0);
+  return d >= today;
+}
+
+function formatReqDate(dateStr) {
+  if (!dateStr) return '';
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  let d;
+  if (m) {
+    d = new Date(+m[1], +m[2] - 1, +m[3]);
+  } else {
+    d = new Date(dateStr);
+  }
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function openRequestWizard() {
