@@ -584,6 +584,7 @@ test.describe.serial('DormToHome E2E Tests', () => {
     await driver.locator('[data-tab="live"]').click();
     await waitForSpinner();
     await expect(driver.getByText('Live Tracking')).toBeVisible({ timeout: 5000 });
+    await page.waitForSelector('#simulate-section', { state: 'attached', timeout: 5000 });
     await page.evaluate(() => {
       isLiveBroadcasting = true;
       updateLiveBtnState(true);
